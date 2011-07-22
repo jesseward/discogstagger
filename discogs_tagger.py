@@ -7,24 +7,30 @@ import re
 import time
 import shutil
 from urllib import FancyURLopener
+from mutagen.flac import FLAC
+import mutagen
+from mutagen.id3 import ID3, TIT2, TPE1, TALB, TCOM, TPUB, TRCK, TDRC, TXXX, \
+                        TCON, COMM
 import discogs_client as discogs
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-# Character substitutions in file name
-CHAR_EXCEPTIONS = {
-            '&' : 'and',
-            ' ' : '_',
-            '#' : 'Number',
-            }
+__version__ = '0.1'
 
-# supported file types.
-FILE_TYPE = ('.mp3', '.flac',)
+class memoized_property(object):
+    """A read-only @property that is only evaluated once. Direct copy from 
+       http://www.reddit.com/r/Python/comments/ejp25/cached_property_decorator_that_is_memory_friendly/ """
+    def __init__(self, fget, doc=None):
+        self.fget = fget
+        self.__doc__ = doc or fget.__doc__
+        self.__name__ = fget.__name__
 
-class TagOpener(FancyURLopener, object):
-    version = 'ogstag/1.1 +http://github.com/jesseward'
-
+    def __get__(self, obj, cls):
+        if obj is None:
+            return self
+        obj.__dict__[self.__name__] = result = self.fget(obj)
+        return result
 
 class Album(object):
     """ Wraps the discogs-client-api script, abstracting the minimal set of
@@ -35,14 +41,15 @@ class Album(object):
 
         try:
             self.release = discogs.Release(releaseid)
-            discogs.user_agent = 'jwtest'
+            discogs.user_agent = 'discogstagger +http://github.com/jesseward'
         except:
-            print "error"
+            print "..."
 
     def __str__(self):
         
         return "<%s - %s>" % (self.artist, self.title)
 
+    @property
     def album_info(self):
         """ Dumps the release data to a formatted text string. Formatted for
             .nfo file  """
@@ -121,7 +128,7 @@ class Album(object):
         for i, t in enumerate(self.release.tracklist):
             if t['type'] == 'Track':
                 try:
-                    artist = t['artists'][0].name
+                    artist = self.clean_name(t['artists'][0].name)
                 except IndexError:
                     artist = self.artist
                 tracklist[i+1] = [artist, t['title']]
@@ -150,7 +157,18 @@ class Album(object):
         return clean_target
 
 class Tagger(Album):
+    """ Provides functionality to modify audio metadata information found in 
+        either MP3 or FLAC file formats.  """    
     
+    # Character substitutions in file name
+    CHAR_EXCEPTIONS = {
+                '&' : 'and',
+                ' ' : '_',
+                '#' : 'Number',
+                }
+
+    # supported file types.
+    FILE_TYPE = ('.mp3', '.flac',)
     
     def __init__(self, destdir, ogsrelid, cfgpar):
         self.destdir = destdir
@@ -176,10 +194,88 @@ class Tagger(Album):
         for hashtag in property_map.keys():
             fileformat = fileformat.replace(hashtag, str(property_map[hashtag]))
         return fileformat
-    
+
+    def _tag_mp3(self, trackno):
+        """ Calls the mutagen library to perform metadata changes for MP3 files """
+        
+        try:
+            audio = ID3(os.path.join(self.dest_dir_name,\
+                        self.file_tag_map[trackno][1]))
+            audio.delete()
+        except mutagen.id3.ID3NoHeaderError:
+            pass
+        # add new ID3 tags 
+        try:
+            id3 = mutagen.id3.ID3(os.path.join(self.dest_dir_name,\
+                        self.file_tag_map[trackno][1]))
+        except mutagen.id3.ID3NoHeaderError:
+            id3 = mutagen.id3.ID3()
+
+        # adding new id3 frames
+        id3.add(TIT2(encoding=3, text=self.tracks[trackno][1]))
+        id3.add(TPE1(encoding=3, text=self.tracks[trackno][0]))
+        id3.add(TALB(encoding=3, text=self.title))
+        id3.add(TCOM(encoding=3, text=self.artist))
+        id3.add(TPUB(encoding=3, text=self.label))
+        id3.add(TDRC(encoding=3, text=self.year))
+        id3.add(TXXX(encoding=3, desc='Catalog #', text=self.catno))
+        id3.add(TCON(encoding=3, text=self.genre))
+        id3.add(TRCK(encoding=3, text=str("%d/%d" % (int(trackno), len(self.tracks)))))
+        id3.add(COMM(encoding=3, desc='eng', text='::> Don\'t believe the hype! <::'))
+        id3.save(os.path.join(self.dest_dir_name,\
+                        self.file_tag_map[trackno][1]),0)
+
+
+    def _tag_flac(self, trackno):
+        """ Calls the mutagen library to perform metadata changes for FLAC files """
+
+        audio = FLAC(os.path.join(self.dest_dir_name,\
+                    self.file_tag_map[trackno][1]))
+        try:
+            encoding = audio["ENCODING"]
+        except:
+            encoding = ""
+            audio.delete()
+
+        # add FLAC tag data
+        audio["TITLE"] = self.tracks[trackno][1]
+        audio["ARTIST"] = self.tracks[trackno][0]
+        audio["ALBUM"] = self.title
+        audio["COMPOSER"] = self.artist
+        audio["ORGANIZATION"] = self.label
+        audio["CATALOGNUM"] = self.catno
+        audio["GENRE"] = self.genre
+        audio["YEAR"] = self.year
+        audio["TRACKNUMBER"] = str(trackno)
+        audio["TRACKTOTAL"] = len(self.tracks)
+        audio["DESCRIPTION"] = '::> Don\'t believe the hype! <::'
+        if(len(encoding) != 0):
+            audio["ENCODING"] = encoding
+        audio.pprint()
+        audio.save()
+
+    def tag_album(self, remove=True):
+
+        if os.path.exists(self.dest_dir_name):
+            print "destination already exists, aborting"
+            sys.exit(0)
+        else:
+            os.mkdir(self.dest_dir_name)
+
+        for track in self.file_tag_map:
+            shutil.copyfile(self.file_tag_map[track][0], \
+                os.path.join(self.dest_dir_name, self.file_tag_map[track][1]))
+
+            filetype = os.path.splitext(self.file_tag_map[track][1])[1]
+            if filetype == '.mp3':
+                self._tag_mp3(track)
+            elif filetype == '.flac':
+                pass 
+            
+     
     @property
     def dest_dir_name(self):
-        """ generates the new directory name """
+        """ generates new album directory name """
 
         ddir = os.path.dirname(self.destdir)
         ddir = os.path.join(ddir, \
@@ -202,12 +298,26 @@ class Tagger(Album):
         return self.clean_filename(nfo)
 
     @staticmethod
-    def write_file(filename, filecontents):
+    def write_file(filecontents, filename):
+        """ writes a string of data to disk """
 
-        pass
-        
+        if not os.path.exists(os.path.dirname(filename)):
+            os.makedirs(os.path.dirname(filename))
+
+        fh = open(filename, 'w')
+        fh.write(filecontents) 
+        fh.close()
+ 
+    def create_nfo(self):
+        """ Writes the .nfo file to disk. """
+
+        return self.write_file(self.album_info, os.path.join(self.dest_dir_name,\
+                 self.nfo_filename))
+ 
     def create_m3u(self):
-        """ m3u format
+        """ Generates the playlist for the given albm.
+            Adhering to the following m3u format.
+
             ---
             #EXTM3U
             #EXTINF:233,Artist - Song
@@ -220,12 +330,15 @@ class Tagger(Album):
         """
 
         m3u =  "#EXTM3U\n"
-        for trk in self.trk_list:
-            m3u += "#EXTINF:-1,%s\n%s\n" % (trk[1], trk[0]) 
+        for i in self.file_tag_map:
+            m3u += "#EXTINF:-1,%s - %s\n" % (self.tracks[i][0], \
+                        self.tracks[i][1]) 
+            m3u += "%s\n" % self.file_tag_map[i][1]
 
-        return m3u
+        return self.write_file(m3u, os.path.join(self.dest_dir_name,\
+                        self.m3u_filename))
 
-    @property 
+    @memoized_property
     def file_tag_map(self):
         """ Returns a dict containing the files from the target directory that 
             we wish to tag. 
@@ -244,11 +357,12 @@ class Tagger(Album):
         
         i = 1
         for f in target_list:
-            if f.lower().endswith(FILE_TYPE):
+            if f.lower().endswith(Tagger.FILE_TYPE):
                 fileext = os.path.splitext(f)[1]
                 newfile = self._value_from_tag(self.cfgpar.get('file-formatting','song'),\
                            i, fileext)
-                file_list[i] = (os.path.join(self.destdir, f), newfile)
+                file_list[i] = (os.path.join(self.destdir, f), \
+                                self.clean_filename(newfile))
                 i += 1
         return file_list
 
@@ -258,7 +372,7 @@ class Tagger(Album):
 
         a = unicode(f).encode("utf-8")
 
-        for k,v in CHAR_EXCEPTIONS.iteritems():
+        for k,v in Tagger.CHAR_EXCEPTIONS.iteritems():
             a = a.replace(k, v)
 
         cf = re.compile(r'[^-\w.\(\)_]')
@@ -292,7 +406,8 @@ if __name__ == "__main__":
     config.read(options.conffile)
 
     release = Tagger(options.ddir, options.releaseid, config)
-    print release.nfo_filename
-    print release.m3u_filename
-    print release.dest_dir_name
-    print release.file_tag_map
+    release.tag_album()
+    release.create_nfo()
+    release.create_m3u()
+
+    print "Done."
