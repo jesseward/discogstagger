@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+# -*- coding: utf-8 -*-
 import sys
 import os
 import errno
@@ -17,7 +17,7 @@ import discogs_client as discogs
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-__version__ = '0.1'
+__version__ = '0.2'
 
 class TagOpener(FancyURLopener, object):
     version = 'discogstagger +http://github.com/jesseward'
@@ -173,13 +173,15 @@ class Tagger(Album):
                 '&' : 'and',
                 ' ' : '_',
                 '#' : 'Number',
+                u'é' : 'e',
+                u'ø' : 'o',
                 }
 
     # supported file types.
     FILE_TYPE = ('.mp3', '.flac',)
     
-    def __init__(self, destdir, ogsrelid, cfgpar):
-        self.destdir = destdir
+    def __init__(self, sourcedir, ogsrelid, cfgpar):
+        self.sourcedir = sourcedir
         self.cfgpar = cfgpar
         Album.__init__(self, ogsrelid)
 
@@ -233,8 +235,13 @@ class Tagger(Album):
         id3.add(TCON(encoding=3, text=self.genre))
         id3.add(TRCK(encoding=3, text=str("%d/%d" % (int(trackno), len(self.tracks)))))
         id3.add(COMM(encoding=3, desc='eng', text='::> Don\'t believe the hype! <::'))
-        id3.save(os.path.join(self.dest_dir_name,\
+        try:
+            id3.save(os.path.join(self.dest_dir_name,\
                         self.file_tag_map[trackno][1]),0)
+        except:
+            logging.error("Unable to tag '%s'" % self.file_tag_map[trackno][1])
+            raise DiscogsTaggerError, "Unable to write tag '%s'" % \
+                            self.file_tag_map[trackno][1]
 
 
     def _tag_flac(self, trackno):
@@ -266,9 +273,15 @@ class Tagger(Album):
         if(len(encoding) != 0):
             audio["ENCODING"] = encoding
         audio.pprint()
-        audio.save()
+        try:
+            audio.save()
+        except:
+            logging.error("Unable to tag '%s'" % self.file_tag_map[trackno][1])
+            raise DiscogsTaggerError, "Unable to write tag '%s'" % \
+                            self.file_tag_map[trackno][1]
 
     def tag_album(self, remove=True):
+        """ Calls the appropriate actions and methods to tag a given album """
 
         if os.path.exists(self.dest_dir_name):
             logging.error("Destination already exists, aborting")
@@ -287,13 +300,16 @@ class Tagger(Album):
             if filetype == '.mp3':
                 self._tag_mp3(track)
             elif filetype == '.flac':
-                self._tag_flac(track) 
+                self._tag_flac(track)
+
+        logging.info("Deleting source directory '%s'" % self.sourcedir)
+        shutil.rmtree(self.sourcedir) 
             
     @property
     def dest_dir_name(self):
         """ generates new album directory name """
 
-        ddir = os.path.dirname(self.destdir)
+        ddir = os.path.dirname(self.sourcedir)
         ddir = os.path.join(ddir, \
                self._value_from_tag(self.cfgpar.get('file-formatting','dir')))
 
@@ -368,11 +384,11 @@ class Tagger(Album):
 
         file_list = {}
         try:
-            target_list = os.listdir(self.destdir)
+            target_list = os.listdir(self.sourcedir)
             target_list.sort()
         except OSError, e:
             if e.errno == errno.EEXIST:
-                logging.error("No such directory '%s'", self.destdir)
+                logging.error("No such directory '%s'", self.sourcedir)
                 raise DiscogsTaggerError, "No such directory"
             else:
                 logging.error("File system error '%s'" % errno[e])
@@ -385,7 +401,7 @@ class Tagger(Album):
                 fileext = os.path.splitext(f)[1]
                 newfile = self._value_from_tag(self.cfgpar.get('file-formatting','song'),\
                            i, fileext)
-                file_list[i] = (os.path.join(self.destdir, f), \
+                file_list[i] = (os.path.join(self.sourcedir, f), \
                                 self.clean_filename(newfile))
                 i += 1
         return file_list
@@ -423,7 +439,7 @@ if __name__ == "__main__":
     p = OptionParser()
     p.add_option("-r", "--releaseid", action="store", dest="releaseid",
                  help="The discogs.com release id of the target album")
-    p.add_option("-d", "--dest", action="store", dest="ddir",
+    p.add_option("-s", "--source", action="store", dest="sdir",
                  help="The directory that you wish to tag")
     p.add_option("-c", "--conf", action="store", dest="conffile",
                  help="The discogstagger configuration file.")
@@ -434,7 +450,7 @@ if __name__ == "__main__":
     if not options.releaseid:
         p.error("Please specify the discogs.com releaseid ('-r')")
 
-    if not options.ddir or not os.path.exists(options.ddir):
+    if not options.sdir or not os.path.exists(options.sdir):
         p.error("Please specify a valid destination directory ('-d')")
 
     config = ConfigParser.ConfigParser()
@@ -442,7 +458,7 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=config.getint('logging', 'level'))
 
-    release = Tagger(options.ddir, options.releaseid, config)
+    release = Tagger(options.sdir, options.releaseid, config)
     logging.info("Tagging album '%s - %s'" % (release.artist, release.title))
     release.tag_album()
     logging.info("Generating .nfo file")
