@@ -25,6 +25,8 @@ class TagOpener(FancyURLopener, object):
 class memoized_property(object):
     """A read-only @property that is only evaluated once. Direct copy from 
        http://www.reddit.com/r/Python/comments/ejp25/cached_property_decorator_that_is_memory_friendly/ """
+
+
     def __init__(self, fget, doc=None):
         self.fget = fget
         self.__doc__ = doc or fget.__doc__
@@ -36,6 +38,9 @@ class memoized_property(object):
         obj.__dict__[self.__name__] = result = self.fget(obj)
         return result
 
+class DiscogsTaggerError(BaseException):
+    pass
+ 
 class Album(object):
     """ Wraps the discogs-client-api script, abstracting the minimal set of
         artist data required to tag an album/release """
@@ -43,11 +48,8 @@ class Album(object):
 
     def __init__ (self, releaseid):
 
-        try:
-            self.release = discogs.Release(releaseid)
-            discogs.user_agent = 'discogstagger +http://github.com/jesseward'
-        except:
-            print "..."
+        self.release = discogs.Release(releaseid)
+        discogs.user_agent = 'discogstagger +http://github.com/jesseward'
 
     def __str__(self):
         
@@ -203,7 +205,10 @@ class Tagger(Album):
 
     def _tag_mp3(self, trackno):
         """ Calls the mutagen library to perform metadata changes for MP3 files """
-        
+       
+        logging.debug("Tagging '%s'" % os.path.join(self.dest_dir_name,\
+                        self.file_tag_map[trackno][1]))
+ 
         try:
             audio = ID3(os.path.join(self.dest_dir_name,\
                         self.file_tag_map[trackno][1]))
@@ -235,6 +240,9 @@ class Tagger(Album):
     def _tag_flac(self, trackno):
         """ Calls the mutagen library to perform metadata changes for FLAC files """
 
+        logging.debug("Tagging '%s'" % os.path.join(self.dest_dir_name,\
+                    self.file_tag_map[trackno][1]))
+
         audio = FLAC(os.path.join(self.dest_dir_name,\
                     self.file_tag_map[trackno][1]))
         try:
@@ -263,9 +271,12 @@ class Tagger(Album):
     def tag_album(self, remove=True):
 
         if os.path.exists(self.dest_dir_name):
-            print "destination already exists, aborting"
-            sys.exit(0)
+            logging.error("Destination already exists, aborting")
+            raise DiscogsTaggerError, "'%s' already exists." % \
+                        self.dest_dir_name
         else:
+            logging.info("Creating destination directory '%s'" \
+                            % self.dest_dir_name)
             os.mkdir(self.dest_dir_name)
 
         for track in self.file_tag_map:
@@ -309,9 +320,15 @@ class Tagger(Album):
         if not os.path.exists(os.path.dirname(filename)):
             os.makedirs(os.path.dirname(filename))
 
-        fh = open(filename, 'w')
-        fh.write(filecontents) 
-        fh.close()
+        logging.debug("Writing file '%s' to disk" % filename)
+
+        try:
+            fh = open(filename, 'w')
+            fh.write(filecontents) 
+            fh.close()
+        except:
+            logging.error("Unable to write file '%s'" % filename)
+            
  
     def create_nfo(self):
         """ Writes the .nfo file to disk. """
@@ -355,9 +372,11 @@ class Tagger(Album):
             target_list.sort()
         except OSError, e:
             if e.errno == errno.EEXIST:
-                pass
+                logging.error("No such directory '%s'", self.destdir)
+                raise DiscogsTaggerError, "No such directory"
             else:
-                pass
+                logging.error("File system error '%s'" % errno[e])
+                raise DiscogsTaggerError, "File system error"
             return None
         
         i = 1
@@ -376,12 +395,13 @@ class Tagger(Album):
 
         if self.images:
             for i, image in enumerate(self.images):
+                logging.debug("Downloading image '%s'" % image)
                 try:
                     url_fh = TagOpener()
                     url_fh.retrieve(image, os.path.join(self.dest_dir_name,\
                             "00-image-%.2d.jpg" % i))
                 except:
-                    pass
+                    logging.error("Unable to download image '%s', skipping." % image)
 
     @staticmethod
     def clean_filename(f):
@@ -400,7 +420,6 @@ if __name__ == "__main__":
     import ConfigParser
     from optparse import OptionParser
     
-    logging.basicConfig(level=logging.DEBUG)
     p = OptionParser()
     p.add_option("-r", "--releaseid", action="store", dest="releaseid",
                  help="The discogs.com release id of the target album")
@@ -420,6 +439,8 @@ if __name__ == "__main__":
 
     config = ConfigParser.ConfigParser()
     config.read(options.conffile)
+
+    logging.basicConfig(level=config.getint('logging', 'level'))
 
     release = Tagger(options.ddir, options.releaseid, config)
     logging.info("Tagging album '%s - %s'" % (release.artist, release.title))

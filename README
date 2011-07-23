@@ -1,15 +1,15 @@
 == What ==
 
-DiscogsTagger is a console based audio metadata tagger. Artist profile data is 
+DiscogsTagger is a console based audio meta-data tagger. Artist profile data is 
 retrieved via the discogs.com API.
 
 Simply provide the script with a destination directory name, that contains an
 album consisting of either FLAC or MP3 media files, and the discogs.com 
 release-id. DiscogsTagger calls out to the discogs.com API and updates the
-audio metadata accordingly.
+audio meta-data accordingly.
 
-During the process, all album images (if present) are retreived from the API. 
-As well, a playlist (.m3u) and an information file (.nfo) are generated per
+During the process, all album images (if present) are retrieved from the API. 
+As well, a play-list (.m3u) and an information file (.nfo) are generated per
 each release.
 
 == Requirements ==
@@ -23,17 +23,22 @@ TODO
 
 == Configuration ==
 
-TODO
+DiscogsTagger searches for the configuration file at the default location of
+~/.discogs_tagger.conf, at run-time. Or you're able to specify the config 
+location with the '-c' switch.
+
+The configuration file must be present to execute the script. The default 
+settings (as shipped), should work without any modifications.
 
 == Examples ==
 
 TODO
 
 == Further TODOs == 
-    - All logging and proper error handling.
-    - String comparision to determine similarities between local tracklist, and
+    - String comparison to determine similarities between local track-list, and
       the discogs API response. Options = Levenshtein or difflib..
-    - clean-up install, or setuptools..
+    - clean-up install, or setup-tools..
+    - Support for multiple cds/directories
 
 == Changelog ==
 
