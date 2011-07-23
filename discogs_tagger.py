@@ -6,6 +6,7 @@ import errno
 import re
 import time
 import shutil
+import logging
 from urllib import FancyURLopener
 from mutagen.flac import FLAC
 import mutagen
@@ -17,6 +18,9 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 
 __version__ = '0.1'
+
+class TagOpener(FancyURLopener, object):
+    version = 'discogstagger +http://github.com/jesseward'
 
 class memoized_property(object):
     """A read-only @property that is only evaluated once. Direct copy from 
@@ -125,13 +129,15 @@ class Album(object):
         """ provides the tracklist of the given release id """
         
         tracklist = {}
-        for i, t in enumerate(self.release.tracklist):
+        i = 1
+        for t in self.release.tracklist:
             if t['type'] == 'Track':
                 try:
                     artist = self.clean_name(t['artists'][0].name)
                 except IndexError:
                     artist = self.artist
-                tracklist[i+1] = [artist, t['title']]
+                tracklist[i] = [artist, t['title']]
+                i += 1
         return tracklist
 
     @staticmethod
@@ -247,7 +253,7 @@ class Tagger(Album):
         audio["GENRE"] = self.genre
         audio["YEAR"] = self.year
         audio["TRACKNUMBER"] = str(trackno)
-        audio["TRACKTOTAL"] = len(self.tracks)
+        audio["TRACKTOTAL"] = str(len(self.tracks))
         audio["DESCRIPTION"] = '::> Don\'t believe the hype! <::'
         if(len(encoding) != 0):
             audio["ENCODING"] = encoding
@@ -270,9 +276,8 @@ class Tagger(Album):
             if filetype == '.mp3':
                 self._tag_mp3(track)
             elif filetype == '.flac':
-                pass 
+                self._tag_flac(track) 
             
-     
     @property
     def dest_dir_name(self):
         """ generates new album directory name """
@@ -366,6 +371,18 @@ class Tagger(Album):
                 i += 1
         return file_list
 
+    def get_images(self):
+        """ Download and store any available images """
+
+        if self.images:
+            for i, image in enumerate(self.images):
+                try:
+                    url_fh = TagOpener()
+                    url_fh.retrieve(image, os.path.join(self.dest_dir_name,\
+                            "00-image-%.2d.jpg" % i))
+                except:
+                    pass
+
     @staticmethod
     def clean_filename(f):
         """ Removes unwanted characters from file names """
@@ -380,7 +397,6 @@ class Tagger(Album):
 
 if __name__ == "__main__":
 
-    import logging
     import ConfigParser
     from optparse import OptionParser
     
@@ -406,8 +422,13 @@ if __name__ == "__main__":
     config.read(options.conffile)
 
     release = Tagger(options.ddir, options.releaseid, config)
+    logging.info("Tagging album '%s - %s'" % (release.artist, release.title))
     release.tag_album()
+    logging.info("Generating .nfo file")
     release.create_nfo()
+    logging.info("Generating .m3u file")
     release.create_m3u()
+    logging.info("Downloading and storing images")
+    release.get_images()
 
-    print "Done."
+    logging.info("Tagging complete.")
