@@ -92,6 +92,15 @@ In [6]: for track in r.tracks.keys():
 
 == Changelog ==
 
+Version 0.3
+
+Add a couple requests from dimitry_ghost and Dec via discogs.com
+http://www.discogs.com/help/forums/topic/251892?page=1#msg2950783
+
+    - Writes the master release id to the .nfo file if present.
+    - Option to allow the original directory to be kept on FS (keep_original=True in
+      config file)
+
 Version 0.2
     - Documentation updates
     - Very basic logging and error handling added to discogs_tagger
