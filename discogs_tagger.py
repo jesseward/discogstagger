@@ -17,7 +17,7 @@ import discogs_client as discogs
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-__version__ = '0.2'
+__version__ = '0.3'
 
 class TagOpener(FancyURLopener, object):
     version = 'discogstagger +http://github.com/jesseward'
@@ -62,12 +62,16 @@ class Album(object):
         
         div = "_ _______________________________________________ _ _\n"
         r = div
-        r += " Name : %s - %s\n" % (self.artist, self.title)
-        r += "Label : %s\n" % (self.label)
-        r += "Genre : %s\n" % (self.genre)
-        r += "Catno : %s\n" % (self.catno)
-        r += " Year : %s\n" % (self.year)
-        r += "  URL : http:/www.discogs.com/release/%s\n" % (self.release._id)
+        r += "  Name : %s - %s\n" % (self.artist, self.title)
+        r += " Label : %s\n" % (self.label)
+        r += " Genre : %s\n" % (self.genre)
+        r += " Catno : %s\n" % (self.catno)
+        r += "  Year : %s\n" % (self.year)
+        r += "   URL : http://www.discogs.com/release/%s\n" % self.release._id
+        
+        if self.master_id:
+            r += "Master : http://www.discogs.com/master/%s\n" % self.master_id 
+        
         r += div
         for key, value in self.tracks.items():
             r += "%.2d. %s - %s\n" % (key, value[0], value[1])
@@ -112,7 +116,16 @@ class Album(object):
             return good_year.match(str(self.release.data['year'])).group(0)
         except IndexError:
             return '1900'
-    
+
+    @property
+    def master_id(self):
+        """ returns the master release id """
+
+        try:
+            return self.release.data['master_id']
+        except KeyError:
+            return None
+
     @property
     def genre(self):
         """ obtain the album genre """ 
@@ -302,8 +315,9 @@ class Tagger(Album):
             elif filetype == '.flac':
                 self._tag_flac(track)
 
-        logging.info("Deleting source directory '%s'" % self.sourcedir)
-        shutil.rmtree(self.sourcedir) 
+        if not self.cfgpar.getboolean('details', 'keep_original'):
+            logging.info("Deleting source directory '%s'" % self.sourcedir)
+            shutil.rmtree(self.sourcedir) 
             
     @property
     def dest_dir_name(self):
