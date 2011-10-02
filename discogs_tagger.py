@@ -7,6 +7,7 @@ import re
 import time
 import shutil
 import logging
+import unicodedata
 from urllib import FancyURLopener
 from mutagen.flac import FLAC
 import mutagen
@@ -180,22 +181,24 @@ class Album(object):
 class Tagger(Album):
     """ Provides functionality to modify audio metadata information found in 
         either MP3 or FLAC file formats.  """    
-    
-    # Character substitutions in file name
+   
     CHAR_EXCEPTIONS = {
-                '&' : 'and',
-                ' ' : '_',
-                '#' : 'Number',
-                u'é' : 'e',
-                u'ø' : 'o',
-                }
+        '&' : 'and',
+        ' ' : '_', 
+    }
 
     # supported file types.
     FILE_TYPE = ('.mp3', '.flac',)
     
-    def __init__(self, sourcedir, ogsrelid, cfgpar):
+    def __init__(self, sourcedir, ogsrelid):
         self.sourcedir = sourcedir
-        self.cfgpar = cfgpar
+        self.group_name = 'jW'
+        self.keep_original = True
+        self.dir_format = '%ALBARTIST%-%ALBTITLE%-(%CATNO%)-%YEAR%-%GROUP%'
+        self.m3u_format = '00-%ALBARTIST%-%ALBTITLE%.m3u'
+        self.nfo_format = '00-%ALBARTIST%-%ALBTITLE%.nfo'
+        self.song_format = '00-%ALBARTIST%-%ALBTITLE%.nfo'
+        
         Album.__init__(self, ogsrelid)
 
     def _value_from_tag(self, fileformat, trackno=1, filetype='.mp3'):
@@ -207,11 +210,12 @@ class Tagger(Album):
             "%YEAR%": self.year,
             "%CATNO%": self.catno,
             "%GENRE%": self.genre,
-            "%GROUP%": self.cfgpar.get('details', 'group'),
+            "%GROUP%": self.group_name,
             "%ARTIST%": self.tracks[trackno][0],
             "%TITLE%": self.tracks[trackno][1],
             "%TRACKNO%": "%.2d" % trackno,
             "%TYPE%": filetype,
+            "%LABEL%": self.label,
         }
 
         for hashtag in property_map.keys():
@@ -315,7 +319,7 @@ class Tagger(Album):
             elif filetype == '.flac':
                 self._tag_flac(track)
 
-        if not self.cfgpar.getboolean('details', 'keep_original'):
+        if not self.keep_original:
             logging.info("Deleting source directory '%s'" % self.sourcedir)
             shutil.rmtree(self.sourcedir) 
             
@@ -323,24 +327,23 @@ class Tagger(Album):
     def dest_dir_name(self):
         """ generates new album directory name """
 
-        ddir = os.path.dirname(self.sourcedir)
-        ddir = os.path.join(ddir, \
-               self._value_from_tag(self.cfgpar.get('file-formatting','dir')))
-
-        return self.clean_filename(ddir)
+        path_name = os.path.dirname(self.sourcedir)
+        dest_dir = self.clean_filename(self._value_from_tag(self.dir_format))
+        
+        return os.path.join(path_name, dest_dir)
 
     @property
     def m3u_filename(self):
         """ generates the m3u file name """
 
-        m3u = self._value_from_tag(self.cfgpar.get('file-formatting', 'm3u'))
+        m3u = self._value_from_tag(self.m3u_format)
         return self.clean_filename(m3u)
 
     @property
     def nfo_filename(self):
         """ generates the nfo file name """
         
-        nfo = self._value_from_tag(self.cfgpar.get('file-formatting', 'nfo'))
+        nfo = self._value_from_tag(self.nfo_format)
         return self.clean_filename(nfo)
 
     @staticmethod
@@ -413,7 +416,7 @@ class Tagger(Album):
         for f in target_list:
             if f.lower().endswith(Tagger.FILE_TYPE):
                 fileext = os.path.splitext(f)[1]
-                newfile = self._value_from_tag(self.cfgpar.get('file-formatting','song'),\
+                newfile = self._value_from_tag(self.song_format,\
                            i, fileext)
                 file_list[i] = (os.path.join(self.sourcedir, f), \
                                 self.clean_filename(newfile))
@@ -437,10 +440,12 @@ class Tagger(Album):
     def clean_filename(f):
         """ Removes unwanted characters from file names """
 
-        a = unicode(f).encode("utf-8")
+        a = unicode(f, "utf-8")
 
         for k,v in Tagger.CHAR_EXCEPTIONS.iteritems():
             a = a.replace(k, v)
+
+        a = unicodedata.normalize('NFKD', a).encode('ascii', 'ignore')
 
         cf = re.compile(r'[^-\w.\(\)_]')
         return cf.sub('', str(a))
@@ -465,14 +470,21 @@ if __name__ == "__main__":
         p.error("Please specify the discogs.com releaseid ('-r')")
 
     if not options.sdir or not os.path.exists(options.sdir):
-        p.error("Please specify a valid destination directory ('-d')")
+        p.error("Please specify a valid source directory ('-s')")
 
     config = ConfigParser.ConfigParser()
     config.read(options.conffile)
 
     logging.basicConfig(level=config.getint('logging', 'level'))
 
-    release = Tagger(options.sdir, options.releaseid, config)
+    release = Tagger(options.sdir, options.releaseid)
+    release.keep_original = config.getboolean('details', 'keep_original')
+    release.nfo_format = config.get('file-formatting','nfo')
+    release.m3u_format = config.get('file-formatting','m3u')
+    release.dir_format = config.get('file-formatting','dir')
+    release.song_format = config.get('file-formatting','song')
+    release.group_name = config.get('details', 'group')
+
     logging.info("Tagging album '%s - %s'" % (release.artist, release.title))
     release.tag_album()
     logging.info("Generating .nfo file")

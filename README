@@ -92,6 +92,16 @@ In [6]: for track in r.tracks.keys():
 
 == Changelog ==
 
+Version 0.4
+
+A couple minor bugfixes, and feature enhancements.
+    - FIX : incorrect handling of directory names, when the basename was not in the
+      immediate path.
+    - Added a new filename tag. %LABEL% now allows the record label name in the filename
+    - Improvement : using the unicodedata library to convert unicode values to their 
+      known ASCII counterpart. Reduction the CHAR_EXCEPTION dict, which will eventually
+      move to the configuration file.
+
 Version 0.3
 
 Add a couple requests from dimitry_ghost and Dec via discogs.com
