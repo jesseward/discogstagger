@@ -11,14 +11,14 @@ import unicodedata
 from urllib import FancyURLopener
 from mutagen.flac import FLAC
 import mutagen
-from mutagen.id3 import ID3, TIT2, TPE1, TALB, TCOM, TPUB, TRCK, TDRC, TXXX, \
-                        TCON, COMM
+from mutagen.id3 import (ID3, TIT2, TPE1, TALB, TCOM, TPUB, TRCK, TDRC, TXXX,
+                        TCON, COMM)
 import discogs_client as discogs
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-__version__ = '0.3'
+__version__ = '0.5'
 
 class TagOpener(FancyURLopener, object):
     version = 'discogstagger +http://github.com/jesseward'
@@ -145,15 +145,13 @@ class Album(object):
         """ provides the tracklist of the given release id """
         
         tracklist = {}
-        i = 1
-        for t in self.release.tracklist:
-            if t['type'] == 'Track':
-                try:
-                    artist = self.clean_name(t['artists'][0].name)
-                except IndexError:
-                    artist = self.artist
-                tracklist[i] = [artist, t['title']]
-                i += 1
+        for i, t in enumerate((x for x in self.release.tracklist
+                 if x['type'] == 'Track'), 1):
+            try:
+                artist = self.clean_name(t['artists'][0].name)
+            except IndexError:
+                artist = self.artist
+            tracklist[i] = [artist, t['title']]
         return tracklist
 
     @staticmethod
@@ -225,18 +223,18 @@ class Tagger(Album):
     def _tag_mp3(self, trackno):
         """ Calls the mutagen library to perform metadata changes for MP3 files """
        
-        logging.debug("Tagging '%s'" % os.path.join(self.dest_dir_name,\
+        logging.debug("Tagging '%s'" % os.path.join(self.dest_dir_name,
                         self.file_tag_map[trackno][1]))
  
         try:
-            audio = ID3(os.path.join(self.dest_dir_name,\
+            audio = ID3(os.path.join(self.dest_dir_name,
                         self.file_tag_map[trackno][1]))
             audio.delete()
         except mutagen.id3.ID3NoHeaderError:
             pass
         # add new ID3 tags 
         try:
-            id3 = mutagen.id3.ID3(os.path.join(self.dest_dir_name,\
+            id3 = mutagen.id3.ID3(os.path.join(self.dest_dir_name,
                         self.file_tag_map[trackno][1]))
         except mutagen.id3.ID3NoHeaderError:
             id3 = mutagen.id3.ID3()
@@ -253,7 +251,7 @@ class Tagger(Album):
         id3.add(TRCK(encoding=3, text=str("%d/%d" % (int(trackno), len(self.tracks)))))
         id3.add(COMM(encoding=3, desc='eng', text='::> Don\'t believe the hype! <::'))
         try:
-            id3.save(os.path.join(self.dest_dir_name,\
+            id3.save(os.path.join(self.dest_dir_name,
                         self.file_tag_map[trackno][1]),0)
         except:
             logging.error("Unable to tag '%s'" % self.file_tag_map[trackno][1])
@@ -264,10 +262,10 @@ class Tagger(Album):
     def _tag_flac(self, trackno):
         """ Calls the mutagen library to perform metadata changes for FLAC files """
 
-        logging.debug("Tagging '%s'" % os.path.join(self.dest_dir_name,\
+        logging.debug("Tagging '%s'" % os.path.join(self.dest_dir_name,
                     self.file_tag_map[trackno][1]))
 
-        audio = FLAC(os.path.join(self.dest_dir_name,\
+        audio = FLAC(os.path.join(self.dest_dir_name,
                     self.file_tag_map[trackno][1]))
         try:
             encoding = audio["ENCODING"]
@@ -305,12 +303,12 @@ class Tagger(Album):
             raise DiscogsTaggerError, "'%s' already exists." % \
                         self.dest_dir_name
         else:
-            logging.info("Creating destination directory '%s'" \
+            logging.info("Creating destination directory '%s'"
                             % self.dest_dir_name)
             os.mkdir(self.dest_dir_name)
 
         for track in self.file_tag_map:
-            shutil.copyfile(self.file_tag_map[track][0], \
+            shutil.copyfile(self.file_tag_map[track][0],
                 os.path.join(self.dest_dir_name, self.file_tag_map[track][1]))
 
             filetype = os.path.splitext(self.file_tag_map[track][1])[1]
@@ -366,8 +364,9 @@ class Tagger(Album):
     def create_nfo(self):
         """ Writes the .nfo file to disk. """
 
-        return self.write_file(self.album_info, os.path.join(self.dest_dir_name,\
-                 self.nfo_filename))
+        return self.write_file(self.album_info,
+                               os.path.join(self.dest_dir_name,
+                               self.nfo_filename))
  
     def create_m3u(self):
         """ Generates the playlist for the given albm.
@@ -386,11 +385,11 @@ class Tagger(Album):
 
         m3u =  "#EXTM3U\n"
         for i in self.file_tag_map:
-            m3u += "#EXTINF:-1,%s - %s\n" % (self.tracks[i][0], \
+            m3u += "#EXTINF:-1,%s - %s\n" % (self.tracks[i][0],
                         self.tracks[i][1]) 
             m3u += "%s\n" % self.file_tag_map[i][1]
 
-        return self.write_file(m3u, os.path.join(self.dest_dir_name,\
+        return self.write_file(m3u, os.path.join(self.dest_dir_name,
                         self.m3u_filename))
 
     @memoized_property
@@ -411,16 +410,13 @@ class Tagger(Album):
                 logging.error("File system error '%s'" % errno[e])
                 raise DiscogsTaggerError, "File system error"
             return None
-        
-        i = 1
-        for f in target_list:
-            if f.lower().endswith(Tagger.FILE_TYPE):
-                fileext = os.path.splitext(f)[1]
-                newfile = self._value_from_tag(self.song_format,\
-                           i, fileext)
-                file_list[i] = (os.path.join(self.sourcedir, f), \
-                                self.clean_filename(newfile))
-                i += 1
+       
+        for i, f in enumerate((x for x in target_list if
+                    x.lower().endswith(Tagger.FILE_TYPE)), 1):
+            fileext = os.path.splitext(f)[1]
+            newfile = self._value_from_tag(self.song_format, i, fileext)
+            file_list[i] = (os.path.join(self.sourcedir, f), 
+                            self.clean_filename(newfile))
         return file_list
 
     def get_images(self):
@@ -431,7 +427,7 @@ class Tagger(Album):
                 logging.debug("Downloading image '%s'" % image)
                 try:
                     url_fh = TagOpener()
-                    url_fh.retrieve(image, os.path.join(self.dest_dir_name,\
+                    url_fh.retrieve(image, os.path.join(self.dest_dir_name,
                             "00-image-%.2d.jpg" % i))
                 except:
                     logging.error("Unable to download image '%s', skipping." % image)

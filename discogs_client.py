@@ -1,5 +1,5 @@
-__version_info__ = (1,1,0)
-__version__ = '1.1.0'
+__version_info__ = (1,1,1)
+__version__ = '1.1.1'
 
 import requests
 import json
@@ -9,6 +9,39 @@ from collections import defaultdict
 
 api_uri = 'http://api.discogs.com'
 user_agent = None
+
+class DiscogsAPIError(Exception):
+    """Root Exception class for Discogs API errors."""
+    pass
+
+
+class UserAgentError(DiscogsAPIError):
+    """Exception class for User-Agent problems."""
+    def __init__(self, msg):
+        self.msg = msg
+
+    def __str__(self):
+        return repr(self.msg)
+
+
+class HTTPError(DiscogsAPIError):
+    """Exception class for HTTP(lib) errors."""
+    def __init__(self, code):
+        self.code = code
+        self.msg = httplib.responses[self.code]
+
+    def __str__(self):
+        return "HTTP status %i: %s." % (self.code, self.msg)
+
+
+class PaginationError(DiscogsAPIError):
+    """Exception class for issues with paginated requests."""
+    def __init__(self, msg):
+        self.msg = msg
+
+    def __str__(self):
+        return repr(self.msg)
+
 
 class APIBase(object):
     def __init__(self):
@@ -34,8 +67,8 @@ class APIBase(object):
     def _response(self):
         if not self._cached_response:
             if not self._check_user_agent():
-                raise DiscogsAPIError, 'Invalid or no User-Agent set'
-            self._cached_response = requests.get(self._uri, self._params, self._headers)
+                raise UserAgentError("Invalid or no User-Agent set.")
+            self._cached_response = requests.get(self._uri, params=self._params, headers=self._headers)
 
         return self._cached_response
 
@@ -45,7 +78,7 @@ class APIBase(object):
 
     @property
     def _uri(self):
-        return '%s/%s/%s' % (api_uri, self._uri_name, urllib.quote_plus(unicode(self._id).encode('utf-8')))
+        return '%s/%s/%s' % (api_uri, self._uri_name, urllib.quote(unicode(self._id).encode('utf-8')))
 
     @property
     def data(self):
@@ -54,10 +87,7 @@ class APIBase(object):
             return release_json.get('resp').get(self._uri_name)
         else:
             status_code = self._response.status_code
-            raise DiscogsAPIError, '%s %s' % (status_code, httplib.responses[status_code])
-
-class DiscogsAPIError(BaseException):
-    pass
+            raise HTTPError(status_code)
 
 def _parse_credits(extraartists):
     """
@@ -262,7 +292,7 @@ class Search(APIBase):
         id = result['title']
         if result['type'] in ('master', 'release'):
             id = result['uri'].split('/')[-1]
-        elif result['type'] == 'artist':
+        elif result['type'] == 'anv':
             return Artist(id, anv=result.get('anv'))
         return _class_from_string(result['type'])(id)
 
@@ -285,7 +315,7 @@ class Search(APIBase):
 
         if page != self._page:
             if page > self.pages:
-                raise DiscogsAPIError, 'Page number exceeds maximum number of pages returned'
+                raise PaginationError('Page number exceeds maximum number of pages returned.')
             self._params['page'] = page
             self._clear_cache()
 

@@ -92,6 +92,11 @@ In [6]: for track in r.tracks.keys():
 
 == Changelog ==
 
+Version 0.5
+
+- Included updated version of discogs_client.py (1.1.1)
+- minimal style cleanup in discogs_tagger.py
+
 Version 0.4
 
 A couple minor bugfixes, and feature enhancements.
