@@ -18,7 +18,7 @@ import discogs_client as discogs
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-__version__ = '0.5'
+__version__ = '0.6'
 
 class TagOpener(FancyURLopener, object):
     version = 'discogstagger +http://github.com/jesseward'
@@ -133,12 +133,18 @@ class Album(object):
 
         return self.release.data['styles'][0]
 
+    def _gen_artist(self, artist_data):
+        """ yields a list of normalized release artists name properties """
+
+        for x in artist_data:
+            yield x.name
+
     @property
     def artist(self):
         """ obtain the album artist """
 
-        artist = self.release.artists[0]
-        return self.clean_name(artist.data['name'])
+        rel_artist = " & ".join(self._gen_artist(self.release.artists))
+        return self.clean_name(rel_artist)
     
     @property
     def tracks(self):

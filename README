@@ -92,6 +92,13 @@ In [6]: for track in r.tracks.keys():
 
 == Changelog ==
 
+Version 0.6
+
+- fix : artist name is now accessed from the release class, and not the Artist
+class (reported by cmaussan)
+- improvement : Release names now support multiple artists in release names. 
+Multiple artist names are statically joined with an ampersand (&).
+
 Version 0.5
 
 - Included updated version of discogs_client.py (1.1.1)
