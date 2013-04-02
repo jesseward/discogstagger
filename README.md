@@ -1,4 +1,6 @@
-== What ==
+# discogstagger
+
+## What is it
 
 DiscogsTagger is a console based audio meta-data tagger. Artist profile data is 
 retrieved via the discogs.com API.
@@ -12,16 +14,30 @@ During the process, all album images (if present) are retrieved from the API.
 As well, a play-list (.m3u) and an information file (.nfo) are generated per
 each release.
 
-== Requirements ==
+## Requirements
 
-Mutagen
-discogs-client - Packaged with DiscogsTagger 
+Mutagen 
+discogs-client 
+requests
 
-== Installation ==
+## Installation 
 
-TODO
+Fetch the repo from github
+```
+git clone https://github.com/jesseward/discogstagger.git
+```
 
-== Configuration ==
+Install the script requirements
+```
+sudo pip install -r requirements.txt
+```
+
+Run through set-up script
+```
+sudo python setup.py install
+```
+
+## Configuration 
 
 DiscogsTagger searches for the configuration file at the default location of
 ~/.discogs_tagger.conf, at run-time. Or you're able to specify the config 
@@ -30,11 +46,12 @@ location with the '-c' switch.
 The configuration file must be present to execute the script. The default 
 settings (as shipped), should work without any modifications.
 
-== Examples ==
+## Examples
 
 The following example tags a directory containing my FLAC backup of the album
 "House For All - Volume 1" on Definitive Recordings (release id 135140).
 
+```
 $ discogs_tagger.py -r 135140 -s House\ for\ All\ Volume\ 1
 INFO:root:Tagging album 'Various - House For All - Volume 1'
 INFO:root:Creating destination directory 'Various-House_For_All_-_Volume_1-(DEF022CD)-1995-jW'
@@ -60,10 +77,12 @@ DEBUG:root:Downloading image 'http://s.dsimg.com/image/R-135140-1112028628.jpg'
 DEBUG:root:Downloading image 'http://s.dsimg.com/image/R-135140-1112028743.jpg'
 DEBUG:root:Downloading image 'http://s.dsimg.com/image/R-135140-1112028761.jpg'
 INFO:root:Tagging complete.
+```
 
 The following example illustrates use of the discogs_tagger.Album class, which
 wraps the discogs-client code.
 
+```
 $ ipython
 
 In [4]: from discogs_tagger import Album
@@ -83,26 +102,25 @@ In [6]: for track in r.tracks.keys():
 10. Las Americas - Worship (Que Divina!) (Jetstream's Mix)
 11. Barada - Glue
 12. Robotman - Dodadoo (Plastikman's Mix)
+```
+## Further TODOs
 
-== Further TODOs == 
-    - String comparison to determine similarities between local track-list, and
-      the discogs API response. Options = Levenshtein or difflib..
-    - clean-up install, or setup-tools..
-    - Support for multiple cds/directories
+* String comparison to determine similarities between local track-list, and  the discogs API response. Options = Levenshtein or difflib..
+* Support for multiple cds/directories
 
-== Changelog ==
+## Changelog
 
 Version 0.6
 
-- fix : artist name is now accessed from the release class, and not the Artist
+* fix : artist name is now accessed from the release class, and not the Artist
 class (reported by cmaussan)
-- improvement : Release names now support multiple artists in release names. 
+* improvement : Release names now support multiple artists in release names. 
 Multiple artist names are statically joined with an ampersand (&).
 
 Version 0.5
 
-- Included updated version of discogs_client.py (1.1.1)
-- minimal style cleanup in discogs_tagger.py
+* Included updated version of discogs_client.py (1.1.1)
+* minimal style cleanup in discogs_tagger.py
 
 Version 0.4
 

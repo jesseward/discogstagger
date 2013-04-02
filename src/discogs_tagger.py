@@ -16,12 +16,12 @@ from mutagen.id3 import (ID3, TIT2, TPE1, TALB, TCOM, TPUB, TRCK, TDRC, TXXX,
 import discogs_client as discogs
 
 reload(sys)
-sys.setdefaultencoding('utf-8')
+sys.setdefaultencoding("utf-8")
 
-__version__ = '0.6'
+__version__ = "0.7"
 
 class TagOpener(FancyURLopener, object):
-    version = 'discogstagger +http://github.com/jesseward'
+    version = "discogstagger +http://github.com/jesseward"
 
 class memoized_property(object):
     """A read-only @property that is only evaluated once. Direct copy from 
@@ -50,7 +50,7 @@ class Album(object):
     def __init__ (self, releaseid):
 
         self.release = discogs.Release(releaseid)
-        discogs.user_agent = 'discogstagger +http://github.com/jesseward'
+        discogs.user_agent = "discogstagger +http://github.com/jesseward"
 
     def __str__(self):
         
@@ -88,19 +88,22 @@ class Album(object):
     def catno(self):
         """ Returns the release catalog number """
 
-        return self.release.data['labels'][0]['catno']
+        return self.release.data["labels"][0]["catno"]
 
     @property
     def label(self):
         """ Returns the release Label name """
 
-        return self.clean_name(self.release.data['labels'][0]['name'])
+        return self.clean_name(self.release.data["labels"][0]["name"])
     
     @property
     def images(self):
         """ return a single list of images for the given album """
 
-        return [ x['uri'] for x in self.release.data['images'] ]
+        try:
+            return [ x["uri"] for x in self.release.data["images"] ]
+        except KeyError:
+            pass
     
     @property
     def title(self):
@@ -112,18 +115,18 @@ class Album(object):
     def year(self):
         """ returns the album release year obtained from API 2.0 """
 
-        good_year = re.compile('\d\d\d\d')
+        good_year = re.compile("\d\d\d\d")
         try:
-            return good_year.match(str(self.release.data['year'])).group(0)
+            return good_year.match(str(self.release.data["year"])).group(0)
         except IndexError:
-            return '1900'
+            return "1900"
 
     @property
     def master_id(self):
         """ returns the master release id """
 
         try:
-            return self.release.data['master_id']
+            return self.release.data["master_id"]
         except KeyError:
             return None
 
@@ -131,7 +134,7 @@ class Album(object):
     def genre(self):
         """ obtain the album genre """ 
 
-        return self.release.data['styles'][0]
+        return self.release.data["styles"][0]
 
     def _gen_artist(self, artist_data):
         """ yields a list of normalized release artists name properties """
@@ -152,12 +155,12 @@ class Album(object):
         
         tracklist = {}
         for i, t in enumerate((x for x in self.release.tracklist
-                 if x['type'] == 'Track'), 1):
+                 if x["type"] == "Track"), 1):
             try:
-                artist = self.clean_name(t['artists'][0].name)
+                artist = self.clean_name(t["artists"][0].name)
             except IndexError:
                 artist = self.artist
-            tracklist[i] = [artist, t['title']]
+            tracklist[i] = [artist, t["title"]]
         return tracklist
 
     @staticmethod
@@ -170,15 +173,15 @@ class Album(object):
             Accepts a string to clean, returns a cleansed version """
 
         groups = {
-            '(.*),\sThe$' : 'The',
+            "(.*),\sThe$" : "The",
         }
 
         # remove discogs duplicate handling eg : John (1)
-        clean_target = re.sub('\s\(\d+\)', '', clean_target)
+        clean_target = re.sub("\s\(\d+\)", "", clean_target)
 
         for regex in groups:
-            if re.search(r'%s' % regex, clean_target):
-                clean_target = "%s %s" % (groups[regex], re.search('%s' % regex,\
+            if re.search(r"%s" % regex, clean_target):
+                clean_target = "%s %s" % (groups[regex], re.search("%s" % regex,\
                 clean_target).group(1))
         return clean_target
 
@@ -187,25 +190,25 @@ class Tagger(Album):
         either MP3 or FLAC file formats.  """    
    
     CHAR_EXCEPTIONS = {
-        '&' : 'and',
-        ' ' : '_', 
+        "&" : "and",
+        " " : "_", 
     }
 
     # supported file types.
-    FILE_TYPE = ('.mp3', '.flac',)
+    FILE_TYPE = (".mp3", ".flac",)
     
     def __init__(self, sourcedir, ogsrelid):
         self.sourcedir = sourcedir
-        self.group_name = 'jW'
+        self.group_name = "jW"
         self.keep_original = True
-        self.dir_format = '%ALBARTIST%-%ALBTITLE%-(%CATNO%)-%YEAR%-%GROUP%'
-        self.m3u_format = '00-%ALBARTIST%-%ALBTITLE%.m3u'
-        self.nfo_format = '00-%ALBARTIST%-%ALBTITLE%.nfo'
-        self.song_format = '00-%ALBARTIST%-%ALBTITLE%.nfo'
+        self.dir_format = "%ALBARTIST%-%ALBTITLE%-(%CATNO%)-%YEAR%-%GROUP%"
+        self.m3u_format = "00-%ALBARTIST%-%ALBTITLE%.m3u"
+        self.nfo_format = "00-%ALBARTIST%-%ALBTITLE%.nfo"
+        self.song_format = "00-%ALBARTIST%-%ALBTITLE%.nfo"
         
         Album.__init__(self, ogsrelid)
 
-    def _value_from_tag(self, fileformat, trackno=1, filetype='.mp3'):
+    def _value_from_tag(self, fileformat, trackno=1, filetype=".mp3"):
         """ Generates the filename tagging map """
 
         property_map = {
@@ -252,10 +255,10 @@ class Tagger(Album):
         id3.add(TCOM(encoding=3, text=self.artist))
         id3.add(TPUB(encoding=3, text=self.label))
         id3.add(TDRC(encoding=3, text=self.year))
-        id3.add(TXXX(encoding=3, desc='Catalog #', text=self.catno))
+        id3.add(TXXX(encoding=3, desc="Catalog #", text=self.catno))
         id3.add(TCON(encoding=3, text=self.genre))
         id3.add(TRCK(encoding=3, text=str("%d/%d" % (int(trackno), len(self.tracks)))))
-        id3.add(COMM(encoding=3, desc='eng', text='::> Don\'t believe the hype! <::'))
+        id3.add(COMM(encoding=3, desc="eng", text="::> Don't believe the hype! <::"))
         try:
             id3.save(os.path.join(self.dest_dir_name,
                         self.file_tag_map[trackno][1]),0)
@@ -290,7 +293,7 @@ class Tagger(Album):
         audio["YEAR"] = self.year
         audio["TRACKNUMBER"] = str(trackno)
         audio["TRACKTOTAL"] = str(len(self.tracks))
-        audio["DESCRIPTION"] = '::> Don\'t believe the hype! <::'
+        audio["DESCRIPTION"] = "::> Don't believe the hype! <::"
         if(len(encoding) != 0):
             audio["ENCODING"] = encoding
         audio.pprint()
@@ -318,9 +321,9 @@ class Tagger(Album):
                 os.path.join(self.dest_dir_name, self.file_tag_map[track][1]))
 
             filetype = os.path.splitext(self.file_tag_map[track][1])[1]
-            if filetype == '.mp3':
+            if filetype == ".mp3":
                 self._tag_mp3(track)
-            elif filetype == '.flac':
+            elif filetype == ".flac":
                 self._tag_flac(track)
 
         if not self.keep_original:
@@ -360,7 +363,7 @@ class Tagger(Album):
         logging.debug("Writing file '%s' to disk" % filename)
 
         try:
-            fh = open(filename, 'w')
+            fh = open(filename, "w")
             fh.write(filecontents) 
             fh.close()
         except:
@@ -447,10 +450,10 @@ class Tagger(Album):
         for k,v in Tagger.CHAR_EXCEPTIONS.iteritems():
             a = a.replace(k, v)
 
-        a = unicodedata.normalize('NFKD', a).encode('ascii', 'ignore')
+        a = unicodedata.normalize("NFKD", a).encode("ascii", "ignore")
 
-        cf = re.compile(r'[^-\w.\(\)_]')
-        return cf.sub('', str(a))
+        cf = re.compile(r"[^-\w.\(\)_]")
+        return cf.sub("", str(a))
 
 if __name__ == "__main__":
 
@@ -465,7 +468,7 @@ if __name__ == "__main__":
     p.add_option("-c", "--conf", action="store", dest="conffile",
                  help="The discogstagger configuration file.")
 
-    p.set_defaults(conffile=os.path.join(os.getenv("HOME"),'.discogs_tagger.conf'))
+    p.set_defaults(conffile="/etc/discogstagger/discogs_tagger.conf")
     (options, args) = p.parse_args()
 
     if not options.releaseid:
@@ -477,15 +480,15 @@ if __name__ == "__main__":
     config = ConfigParser.ConfigParser()
     config.read(options.conffile)
 
-    logging.basicConfig(level=config.getint('logging', 'level'))
+    logging.basicConfig(level=config.getint("logging", "level"))
 
     release = Tagger(options.sdir, options.releaseid)
-    release.keep_original = config.getboolean('details', 'keep_original')
-    release.nfo_format = config.get('file-formatting','nfo')
-    release.m3u_format = config.get('file-formatting','m3u')
-    release.dir_format = config.get('file-formatting','dir')
-    release.song_format = config.get('file-formatting','song')
-    release.group_name = config.get('details', 'group')
+    release.keep_original = config.getboolean("details", "keep_original")
+    release.nfo_format = config.get("file-formatting","nfo")
+    release.m3u_format = config.get("file-formatting","m3u")
+    release.dir_format = config.get("file-formatting","dir")
+    release.song_format = config.get("file-formatting","song")
+    release.group_name = config.get("details", "group")
 
     logging.info("Tagging album '%s - %s'" % (release.artist, release.title))
     release.tag_album()
