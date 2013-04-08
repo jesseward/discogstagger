@@ -1,16 +1,27 @@
 # -*- coding: utf-8 -*-
 
+from urllib import FancyURLopener
 import os
 import re
 import sys
+import logging
 from unicodedata import normalize
 
-from discogsalbum import DiscogsAlbum, TrackContainer    
+from discogsalbum import DiscogsAlbum, TrackContainer 
 
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
+logger = logging.getLogger(__name__)
 
+
+class TagOpener(FancyURLopener, object):
+
+    version = "discogstagger +http://github.com/jesseward"
+
+    def __init__(self):
+        FancyURLopener.__init__(self)
+    
 class TaggerUtils(object):
     """ Accepts a destination directory name and discogs release id.
         TaggerUtils returns a the corresponding metadata information , in which
@@ -34,7 +45,7 @@ class TaggerUtils(object):
         self.dir_format = "%ALBARTIST%-%ALBTITLE%-(%CATNO%)-%YEAR%-%GROUP%"
         self.m3u_format = "00-%ALBARTIST%-%ALBTITLE%.m3u"
         self.nfo_format = "00-%ALBARTIST%-%ALBTITLE%.nfo"
-        self.song_format = "00-%ALBARTIST%-%ALBTITLE%.nfo"
+        self.song_format = "%TRACKNO%-%ARTIST%-%TITLE%%TYPE%"
         
         self.sourcedir = sourcedir
         self.files_to_tag = self._get_target_list()
@@ -55,8 +66,8 @@ class TaggerUtils(object):
             "%CATNO%": self.album.catno,
             "%GENRE%": self.album.genre,
             "%GROUP%": self.group_name,
-            "%ARTIST%": self.album.tracks[trackno].artist,
-            "%TITLE%": self.album.tracks[trackno].title,
+            "%ARTIST%": self.album.tracks[trackno-1].artist,
+            "%TITLE%": self.album.tracks[trackno-1].title,
             "%TRACKNO%": "%.2d" % trackno,
             "%TYPE%": filetype,
             "%LABEL%": self.album.label,
@@ -88,13 +99,16 @@ class TaggerUtils(object):
 
         # ignore files that do not match FILE_TYPE
         for position, filename in enumerate((x for x in self.files_to_tag if
-                       x.lower().endswith(TaggerUtils.FILE_TYPE)), 1) :
+                       x.lower().endswith(TaggerUtils.FILE_TYPE)), ) :
             # add the found files to the tag_map list
+            logger.debug("mapping file %s --to--> %s - %s" % (filename, 
+                self.album.tracks[position].artist,
+                self.album.tracks[position].title))
             track = TrackContainer()
-            track.position = position
+            track.position = position + 1
             track.orig_file = filename
             fileext = os.path.splitext(filename)[1]
-            newfile = self._value_from_tag(self.song_format, position, fileext)
+            newfile = self._value_from_tag(self.song_format, track.position, fileext)
             track.new_file = get_clean_filename(newfile)
             track.artist = self.album.tracks[position].artist
             track.title = self.album.tracks[position].title
@@ -155,12 +169,12 @@ def write_file(filecontents, filename):
 
     return True
         
-def create_nfo(self):
+def create_nfo(nfo, dest_dir, nfo_file):
     """ Writes the .nfo file to disk. """
 
-    return write_file(album_info, os.path.join(dest_dir, nfo_file))
+    return write_file(nfo, os.path.join(dest_dir, nfo_file))
 
-def create_m3u(tag_map):
+def create_m3u(tag_map, dest_dir_name, m3u_filename):
     """ Generates the playlist for the given albm.
         Adhering to the following m3u format.
 
@@ -181,15 +195,16 @@ def create_m3u(tag_map):
 
     return write_file(m3u, os.path.join(dest_dir_name, m3u_filename))
 
-def get_images(self):
+def get_images(images, dest_dir_name):
     """ Download and store any available images """
 
-    if self.images:
-        for i, image in enumerate(self.images):
+    if images:
+        for i, image in enumerate(images, 1):
             logging.debug("Downloading image '%s'" % image)
             try:
                 url_fh = TagOpener()
-                url_fh.retrieve(image, os.path.join(self.dest_dir_name,
+                url_fh.retrieve(image, os.path.join(dest_dir_name,
                         "00-image-%.2d.jpg" % i))
-            except:
+            except Exception as e:
                 logging.error("Unable to download image '%s', skipping." % image)
+                print e

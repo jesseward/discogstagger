@@ -1,21 +1,8 @@
-from urllib import FancyURLopener
+import logging
 import re
 import discogs_client as discogs
 
-class TagOpener(FancyURLopener, object):
-
-    version = "discogstagger +http://github.com/jesseward"
-
-    def __init__(self, fget, doc=None):
-        self.fget = fget
-        self.__doc__ = doc or fget.__doc__
-        self.__name__ = fget.__name__
-
-    def __get__(self, obj, cls):
-        if obj is None:
-            return self
-        obj.__dict__[self.__name__] = result = self.fget(obj)
-        return result
+logger = logging.getLogger(__name__)
 
 class TrackContainer(object):
     """ Class used to describe a tracklisting, typical properties are
@@ -48,6 +35,8 @@ class DiscogsAlbum(object):
 
         self.release = discogs.Release(releaseid)
         discogs.user_agent = "discogstagger +http://github.com/jesseward"
+        logger.info("Fetching %s - %s (%s)" % (self.artist, self.title,
+                        releaseid))
 
     def __str__(self):
         
@@ -152,14 +141,14 @@ class DiscogsAlbum(object):
         
         track_list = []
         for i, t in enumerate((x for x in self.release.tracklist
-                 if x["type"] == "Track"), 1):
+                 if x["type"] == "Track") ):
             try:
                 artist = self.clean_name(t["artists"][0].name)
             except IndexError:
                 artist = self.artist
 
             track = TrackContainer()
-            track.position = i
+            track.position = i + 1 
             track.artist = artist
             track.title = t["title"]
             track_list.append(track)
