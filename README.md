@@ -2,23 +2,29 @@
 
 ## What is it
 
-DiscogsTagger is a console based audio meta-data tagger. Artist profile data is 
+discogstagger is a console based audio meta-data tagger. Artist profile data is 
 retrieved via the discogs.com API.
 
 Simply provide the script with a destination directory name, that contains an
-album consisting of either FLAC or MP3 media files, and the discogs.com 
-release-id. DiscogsTagger calls out to the discogs.com API and updates the
+album consisting of either FLAC or MP3 media files and the discogs.com 
+release-id. discogstaggs calls out to the discogs.com API and updates the
 audio meta-data accordingly.
 
 During the process, all album images (if present) are retrieved from the API. 
 As well, a play-list (.m3u) and an information file (.nfo) are generated per
 each release.
 
+Optionally discogstagger will embed the found album art into the file meta data
+
 ## Requirements
 
 * Mutagen 
 * discogs-client 
 * requests
+
+I am also packaging/reusing the MediaFile library from the "beets" project. This
+will be packaged with discogs tagger until MediaFile is split out to its own
+package.
 
 ## Installation 
 
@@ -47,105 +53,3 @@ The configuration file must be present to execute the script. The default
 settings (as shipped), should work without any modifications.
 
 ## Examples
-
-The following example tags a directory containing my FLAC backup of the album
-"House For All - Volume 1" on Definitive Recordings (release id 135140).
-
-```
-$ discogs_tagger.py -r 135140 -s House\ for\ All\ Volume\ 1
-INFO:root:Tagging album 'Various - House For All - Volume 1'
-INFO:root:Creating destination directory 'Various-House_For_All_-_Volume_1-(DEF022CD)-1995-jW'
-DEBUG:root:Tagging 'Various-House_For_All_-_Volume_1-(DEF022CD)-1995-jW/01-Chuck_Phulasole-Stargazer.flac'
-DEBUG:root:Tagging 'Various-House_For_All_-_Volume_1-(DEF022CD)-1995-jW/02-Juicy_Fruit-Liferaft_(Stickmens_Mix).flac'
-DEBUG:root:Tagging 'Various-House_For_All_-_Volume_1-(DEF022CD)-1995-jW/03-Robotman-Dodadoo_(J._Acquavivas_Mix).flac'
-DEBUG:root:Tagging 'Various-House_For_All_-_Volume_1-(DEF022CD)-1995-jW/04-Wax_Fruit-Just_A_Party.flac'
-DEBUG:root:Tagging 'Various-House_For_All_-_Volume_1-(DEF022CD)-1995-jW/05-Blunted_Dummies-House_For_All.flac'
-DEBUG:root:Tagging 'Various-House_For_All_-_Volume_1-(DEF022CD)-1995-jW/06-Math_U_Matix-Blue.flac'
-DEBUG:root:Tagging 'Various-House_For_All_-_Volume_1-(DEF022CD)-1995-jW/07-Barada-Flesh.flac'
-DEBUG:root:Tagging 'Various-House_For_All_-_Volume_1-(DEF022CD)-1995-jW/08-Omegaman-Homebass.flac'
-DEBUG:root:Tagging 'Various-House_For_All_-_Volume_1-(DEF022CD)-1995-jW/09-Las_Americas-Look_Listen_Love.flac'
-DEBUG:root:Tagging 'Various-House_For_All_-_Volume_1-(DEF022CD)-1995-jW/10-Las_Americas-Worship_(Que_Divina)_(Jetstreams_Mix).flac'
-DEBUG:root:Tagging 'Various-House_For_All_-_Volume_1-(DEF022CD)-1995-jW/11-Barada-Glue.flac'
-DEBUG:root:Tagging 'Various-House_For_All_-_Volume_1-(DEF022CD)-1995-jW/12-Robotman-Dodadoo_(Plastikmans_Mix).flac'
-INFO:root:Deleting source directory 'House for All Volume 1'
-INFO:root:Generating .nfo file
-DEBUG:root:Writing file 'Various-House_For_All_-_Volume_1-(DEF022CD)-1995-jW/00-Various-House_For_All_-_Volume_1.nfo' to disk
-INFO:root:Generating .m3u file
-DEBUG:root:Writing file 'Various-House_For_All_-_Volume_1-(DEF022CD)-1995-jW/00-Various-House_For_All_-_Volume_1.m3u' to disk
-INFO:root:Downloading and storing images
-DEBUG:root:Downloading image 'http://s.dsimg.com/image/R-135140-1112028628.jpg'
-DEBUG:root:Downloading image 'http://s.dsimg.com/image/R-135140-1112028743.jpg'
-DEBUG:root:Downloading image 'http://s.dsimg.com/image/R-135140-1112028761.jpg'
-INFO:root:Tagging complete.
-```
-
-The following example illustrates use of the discogs_tagger.Album class, which
-wraps the discogs-client code.
-
-```
-$ ipython
-
-In [4]: from discogs_tagger import Album
-In [5]: r = Album(135140)
-In [6]: for track in r.tracks.keys():
-            print "%.2d. %s - %s" % (track, r.tracks[track][0], r.tracks[track][1])
-
-01. Chuck Phulasole - Stargazer
-02. Juicy Fruit - Liferaft (Stickmen's Mix)
-03. Robotman - Dodadoo (J. Acquaviva's Mix)
-04. Wax Fruit - Just A Party
-05. Blunted Dummies - House For All
-06. Math U Matix - Blue
-07. Barada - Flesh
-08. Omegaman - Homebass
-09. Las Americas - Look, Listen, Love
-10. Las Americas - Worship (Que Divina!) (Jetstream's Mix)
-11. Barada - Glue
-12. Robotman - Dodadoo (Plastikman's Mix)
-```
-## Further TODOs
-
-* String comparison to determine similarities between local track-list, and  the discogs API response. Options = Levenshtein or difflib..
-* Support for multiple cds/directories
-
-## Changelog
-
-Version 0.6
-
-* fix : artist name is now accessed from the release class, and not the Artist
-class (reported by cmaussan)
-* improvement : Release names now support multiple artists in release names. 
-Multiple artist names are statically joined with an ampersand (&).
-
-Version 0.5
-
-* Included updated version of discogs_client.py (1.1.1)
-* minimal style cleanup in discogs_tagger.py
-
-Version 0.4
-
-A couple minor bugfixes, and feature enhancements.
-    - FIX : incorrect handling of directory names, when the basename was not in the
-      immediate path.
-    - Added a new filename tag. %LABEL% now allows the record label name in the filename
-    - Improvement : using the unicodedata library to convert unicode values to their 
-      known ASCII counterpart. Reduction the CHAR_EXCEPTION dict, which will eventually
-      move to the configuration file.
-
-Version 0.3
-
-Add a couple requests from dimitry_ghost and Dec via discogs.com
-http://www.discogs.com/help/forums/topic/251892?page=1#msg2950783
-
-    - Writes the master release id to the .nfo file if present.
-    - Option to allow the original directory to be kept on FS (keep_original=True in
-      config file)
-
-Version 0.2
-    - Documentation updates
-    - Very basic logging and error handling added to discogs_tagger
-    - Providing script to a wider audience.
-
-Version 0.1 
-
-    - An initial, very basic working release. Minimal testing was performed. 
