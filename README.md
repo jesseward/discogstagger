@@ -110,6 +110,10 @@ In [6]: for track in r.tracks.keys():
 
 ## Changelog
 
+Version 0.8
+
+* fix : bug in discogs_tagger.py . song_format initialized incorrectly.
+
 Version 0.6
 
 * fix : artist name is now accessed from the release class, and not the Artist

@@ -18,7 +18,7 @@ import discogs_client as discogs
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
-__version__ = "0.7"
+__version__ = "0.8"
 
 class TagOpener(FancyURLopener, object):
     version = "discogstagger +http://github.com/jesseward"
@@ -204,7 +204,7 @@ class Tagger(Album):
         self.dir_format = "%ALBARTIST%-%ALBTITLE%-(%CATNO%)-%YEAR%-%GROUP%"
         self.m3u_format = "00-%ALBARTIST%-%ALBTITLE%.m3u"
         self.nfo_format = "00-%ALBARTIST%-%ALBTITLE%.nfo"
-        self.song_format = "00-%ALBARTIST%-%ALBTITLE%.nfo"
+        self.song_format = "%TRACKNO%-%ARTIST%-%TITLE%%TYPE%"
         
         Album.__init__(self, ogsrelid)
 
