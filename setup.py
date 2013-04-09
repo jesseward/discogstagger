@@ -1,5 +1,5 @@
 NAME = "discogstagger"
-VERSION = "0.8"
+VERSION = "1.0"
 
 from distutils.core import setup
 
@@ -10,7 +10,8 @@ setup (
     author = "Jesse Ward",
     author_email = "jesse@housejunkie.ca",
     url = "https://github.com/jesseward/discogstagger",
-    scripts = ["src/discogs_tagger.py"],
+    scripts = ["scripts/discogs_tagger.py"],
+    packages = ["discogstagger", "discogstagger.ext"],
     data_files = [(
         "/etc/%s/" % NAME, ["conf/discogs_tagger.conf"]),
         ("share/%s" % NAME, ["README.md"])]

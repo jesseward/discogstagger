@@ -1,0 +1,52 @@
+## Changelog
+
+Version 1.0.0
+* feature : options to embed cover art into metadata (issue #4)
+* feature : now supports mp4/asf formats (in addition to mp3/flac) via
+                the inclusion of the mediafile.py library. (not yet tested)
+* improvement : clean up code base and installer
+* improvement : remove comments from metadata (issue #6)
+
+Version 0.8
+
+* fix : bug in discogs_tagger.py . song_format initialized incorrectly.
+
+Version 0.6
+
+* fix : artist name is now accessed from the release class, and not the Artist
+class (reported by cmaussan)
+* improvement : Release names now support multiple artists in release names. 
+Multiple artist names are statically joined with an ampersand (&).
+
+Version 0.5
+
+* Included updated version of discogs_client.py (1.1.1)
+* minimal style cleanup in discogs_tagger.py
+
+Version 0.4
+
+A couple minor bugfixes, and feature enhancements.
+    - FIX : incorrect handling of directory names, when the basename was not in the
+      immediate path.
+    - Added a new filename tag. %LABEL% now allows the record label name in the filename
+    - Improvement : using the unicodedata library to convert unicode values to their 
+      known ASCII counterpart. Reduction the CHAR_EXCEPTION dict, which will eventually
+      move to the configuration file.
+
+Version 0.3
+
+Add a couple requests from dimitry_ghost and Dec via discogs.com
+http://www.discogs.com/help/forums/topic/251892?page=1#msg2950783
+
+    - Writes the master release id to the .nfo file if present.
+    - Option to allow the original directory to be kept on FS (keep_original=True in
+      config file)
+
+Version 0.2
+    - Documentation updates
+    - Very basic logging and error handling added to discogs_tagger
+    - Providing script to a wider audience.
+
+Version 0.1 
+
+    - An initial, very basic working release. Minimal testing was performed.
