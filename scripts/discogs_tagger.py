@@ -49,13 +49,11 @@ release.dir_format = config.get("file-formatting","dir")
 release.song_format = config.get("file-formatting","song")
 release.group_name = config.get("details", "group")
 
-# ensure we were able to map the rease appropriately.
+# ensure we were able to map the release appropriately.
 if not release.tag_map:
-    for file in release.files_to_tag: 
-        print file
-    for track in release.album.tracks: 
-        print "%s - %s" % (track.artist, track.title) 
-    sys.exit("Unable to match file list to %s" % options.releaseid)
+    logging.error("Unable to match file list to discogs release '%s'" % 
+                    options.releaseid)
+    sys.exit()
 
 #
 # start tagging actions.

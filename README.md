@@ -61,3 +61,37 @@ keep_original=True
 # Embed cover art. Include album art from discogs.com in the metadata tags
 embed_coverart=False
 ```
+
+## Examples
+
+```
+$ discogs_tagger.py -s Nine\ Inch\ Nails\ Pretty\ Hate\ Machine -r 145796
+INFO:requests.packages.urllib3.connectionpool:Starting new HTTP connection (1): api.discogs.com
+INFO:discogstagger.discogsalbum:Fetching Nine Inch Nails - Pretty Hate Machine (145796)
+INFO:root:Tagging album 'Nine Inch Nails - Pretty Hate Machine'
+INFO:root:Creating destination directory 'Nine_Inch_Nails-Pretty_Hate_Machine-(TVT_2610-2)-1989-jW'
+INFO:root:Downloading and storing images
+INFO:__main__:Writing file Nine_Inch_Nails-Pretty_Hate_Machine-(TVT_2610-2)-1989-jW/01-Nine_Inch_Nails-Head_Like_A_Hole.flac
+INFO:__main__:Embedding album art.
+INFO:__main__:Writing file Nine_Inch_Nails-Pretty_Hate_Machine-(TVT_2610-2)-1989-jW/02-Nine_Inch_Nails-Terrible_Lie.flac
+INFO:__main__:Embedding album art.
+INFO:__main__:Writing file Nine_Inch_Nails-Pretty_Hate_Machine-(TVT_2610-2)-1989-jW/03-Nine_Inch_Nails-Down_In_It.flac
+INFO:__main__:Embedding album art.
+INFO:__main__:Writing file Nine_Inch_Nails-Pretty_Hate_Machine-(TVT_2610-2)-1989-jW/04-Nine_Inch_Nails-Sanctified.flac
+INFO:__main__:Embedding album art.
+INFO:__main__:Writing file Nine_Inch_Nails-Pretty_Hate_Machine-(TVT_2610-2)-1989-jW/05-Nine_Inch_Nails-Something_I_Can_Never_Have.flac
+INFO:__main__:Embedding album art.
+INFO:__main__:Writing file Nine_Inch_Nails-Pretty_Hate_Machine-(TVT_2610-2)-1989-jW/06-Nine_Inch_Nails-Kinda_I_Want_To.flac
+INFO:__main__:Embedding album art.
+INFO:__main__:Writing file Nine_Inch_Nails-Pretty_Hate_Machine-(TVT_2610-2)-1989-jW/07-Nine_Inch_Nails-Sin.flac
+INFO:__main__:Embedding album art.
+INFO:__main__:Writing file Nine_Inch_Nails-Pretty_Hate_Machine-(TVT_2610-2)-1989-jW/08-Nine_Inch_Nails-Thats_What_I_Get.flac
+INFO:__main__:Embedding album art.
+INFO:__main__:Writing file Nine_Inch_Nails-Pretty_Hate_Machine-(TVT_2610-2)-1989-jW/09-Nine_Inch_Nails-The_Only_Time.flac
+INFO:__main__:Embedding album art.
+INFO:__main__:Writing file Nine_Inch_Nails-Pretty_Hate_Machine-(TVT_2610-2)-1989-jW/10-Nine_Inch_Nails-Ringfinger.flac
+INFO:__main__:Embedding album art.
+INFO:root:Generating .nfo file
+INFO:root:Generating .m3u file
+INFO:root:Tagging complete.
+```
