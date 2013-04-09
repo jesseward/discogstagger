@@ -39,8 +39,10 @@ config.read(options.conffile)
 
 logging.basicConfig(level=config.getint("logging", "level"))
 
+keep_original = config.getboolean("details", "keep_original")
+embed_coverart = config.getboolean("details", "embed_coverart")
+
 release = TaggerUtils(options.sdir, options.releaseid)
-release.keep_original = config.getboolean("details", "keep_original")
 release.nfo_format = config.get("file-formatting","nfo")
 release.m3u_format = config.get("file-formatting","m3u")
 release.dir_format = config.get("file-formatting","dir")
@@ -49,6 +51,10 @@ release.group_name = config.get("details", "group")
 
 # ensure we were able to map the rease appropriately.
 if not release.tag_map:
+    for file in release.files_to_tag: 
+        print file
+    for track in release.album.tracks: 
+        print "%s - %s" % (track.artist, track.title) 
     sys.exit("Unable to match file list to %s" % options.releaseid)
 
 #
@@ -90,12 +96,17 @@ for track in release.tag_map:
     metadata.albumartist = release.album.artist
     metadata.label = release.album.label
     metadata.year = release.album.year
+    # adding two are there is no standard. discogstagger pre v1
+    # used (TXXX desc="Catalog #")
+    # mediafile uses TXXX desc="CATALOGNUMBER"
     metadata.catalognum = release.album.catno
+    metadata.catalognumber = release.album.catno
     metadata.genre = release.album.genre 
     metadata.track = track.position
     metadata.tracktotal = len(release.tag_map)
 
-    if os.path.exists(os.path.join(release.dest_dir_name, "00-image-01.jpg")):
+    if embed_coverart and os.path.exists(os.path.join(release.dest_dir_name,
+                 "00-image-01.jpg")):
         imgdata = open(os.path.join(release.dest_dir_name,  
                     "00-image-01.jpg")).read()
         imgtype = imghdr.what(None, imgdata)
@@ -115,5 +126,10 @@ create_nfo(release.album.album_info, release.dest_dir_name,
 
 logging.info("Generating .m3u file")
 create_m3u(release.tag_map, release.dest_dir_name, release.m3u_filename)
+
+# remove source directory, if configured as such.
+if not keep_original:
+    logging.info("Deleting source directory '%s'" % options.sdir)
+    shutil.rmtree(options.sdir) 
 
 logging.info("Tagging complete.")

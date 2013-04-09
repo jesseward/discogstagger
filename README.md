@@ -52,4 +52,12 @@ location with the '-c' switch.
 The configuration file must be present to execute the script. The default 
 settings (as shipped), should work without any modifications.
 
-## Examples
+Note that you may wish to modify the following default configuration options. 
+The defaults are shipped as such in attempt to be as non destructive as possible
+
+```
+# True/False : leaves a copy of the original audio files on disk, untouched after 
+keep_original=True
+# Embed cover art. Include album art from discogs.com in the metadata tags
+embed_coverart=False
+```

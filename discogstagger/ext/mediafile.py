@@ -1039,12 +1039,20 @@ class MediaFile(object):
         etc = StorageStyle('ASIN'),
         asf = StorageStyle('MusicBrainz/ASIN'),
     )
-    catalognum = MediaField(
+    catalognumber = MediaField(
         mp3 = StorageStyle('TXXX', id3_desc=u'CATALOGNUMBER'),
         mp4 = StorageStyle("----:com.apple.iTunes:CATALOGNUMBER"),
         etc = StorageStyle('CATALOGNUMBER'),
         asf = StorageStyle('WM/CatalogNo'),
     )
+
+    catalognum = MediaField(
+        mp3 = StorageStyle('TXXX', id3_desc=u'Catalog #'),
+        mp4 = StorageStyle("----:com.apple.iTunes:CATALOGNUM"),
+        etc = StorageStyle('CATALOGNUM'),
+        asf = StorageStyle('WM/CatalogNum'),
+    )
+
     disctitle = MediaField(
         mp3 = StorageStyle('TSST'),
         mp4 = StorageStyle("----:com.apple.iTunes:DISCSUBTITLE"),

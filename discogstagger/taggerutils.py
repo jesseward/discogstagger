@@ -90,7 +90,8 @@ class TaggerUtils(object):
             else:
                 raise IOError("General IO system error '%s'" % errno[e])
 
-        return dir_list
+        # strip unwanted files
+        return [x for x in dir_list if x.lower().endswith(TaggerUtils.FILE_TYPE)]
 
     def _get_tag_map(self):
         """ matches the old with new via TargetTagMap object. """
@@ -98,8 +99,7 @@ class TaggerUtils(object):
         tag_map = [] 
 
         # ignore files that do not match FILE_TYPE
-        for position, filename in enumerate((x for x in self.files_to_tag if
-                       x.lower().endswith(TaggerUtils.FILE_TYPE)), ) :
+        for position, filename in enumerate(self.files_to_tag):
             # add the found files to the tag_map list
             logger.debug("mapping file %s --to--> %s - %s" % (filename, 
                 self.album.tracks[position].artist,
