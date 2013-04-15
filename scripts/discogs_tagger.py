@@ -10,10 +10,10 @@ import ConfigParser
 from optparse import OptionParser
 from discogstagger.ext.mediafile import MediaFile
 from discogstagger.taggerutils import (
-            TaggerUtils, 
-            create_nfo, 
-            create_m3u,
-            get_images)
+    TaggerUtils,
+    create_nfo,
+    create_m3u,
+    get_images)
 
 logger = logging.getLogger(__name__)
 
@@ -43,30 +43,30 @@ keep_original = config.getboolean("details", "keep_original")
 embed_coverart = config.getboolean("details", "embed_coverart")
 
 release = TaggerUtils(options.sdir, options.releaseid)
-release.nfo_format = config.get("file-formatting","nfo")
-release.m3u_format = config.get("file-formatting","m3u")
-release.dir_format = config.get("file-formatting","dir")
-release.song_format = config.get("file-formatting","song")
+release.nfo_format = config.get("file-formatting", "nfo")
+release.m3u_format = config.get("file-formatting", "m3u")
+release.dir_format = config.get("file-formatting", "dir")
+release.song_format = config.get("file-formatting", "song")
 release.group_name = config.get("details", "group")
 
 # ensure we were able to map the release appropriately.
 if not release.tag_map:
-    logging.error("Unable to match file list to discogs release '%s'" % 
-                    options.releaseid)
+    logging.error("Unable to match file list to discogs release '%s'" %
+                  options.releaseid)
     sys.exit()
 
 #
 # start tagging actions.
 #
-logging.info("Tagging album '%s - %s'" % (release.album.artist, 
-            release.album.title))
+logging.info("Tagging album '%s - %s'" % (release.album.artist,
+             release.album.title))
 
 if os.path.exists(release.dest_dir_name):
     logging.error("Destination already exists %s" % release.dest_dir_name)
     sys.exit("%s directory already exists, aborting." % release.dest_dir_name)
 else:
     logging.info("Creating destination directory '%s'" %
-                release.dest_dir_name)
+                 release.dest_dir_name)
     os.mkdir(release.dest_dir_name)
 
 logging.info("Downloading and storing images")
@@ -76,15 +76,15 @@ for track in release.tag_map:
     logger.info("Writing file %s" % os.path.join(release.dest_dir_name,
                 track.new_file))
     logger.debug("metadata -> %.2d %s - %s" % (track.position, track.artist,
-                    track.title))
+                 track.title))
 
     # copy old file into new location
     shutil.copyfile(os.path.join(options.sdir, track.orig_file),
                     os.path.join(release.dest_dir_name, track.new_file))
-   
-    # load metadata information 
+
+    # load metadata information
     metadata = MediaFile(os.path.join(
-                    release.dest_dir_name, track.new_file))
+                         release.dest_dir_name, track.new_file))
     # remove current metadata
     metadata.delete()
     metadata.title = track.title
@@ -99,14 +99,14 @@ for track in release.tag_map:
     # mediafile uses TXXX desc="CATALOGNUMBER"
     metadata.catalognum = release.album.catno
     metadata.catalognumber = release.album.catno
-    metadata.genre = release.album.genre 
+    metadata.genre = release.album.genre
     metadata.track = track.position
     metadata.tracktotal = len(release.tag_map)
 
     if embed_coverart and os.path.exists(os.path.join(release.dest_dir_name,
-                 "00-image-01.jpg")):
-        imgdata = open(os.path.join(release.dest_dir_name,  
-                    "00-image-01.jpg")).read()
+                                         "00-image-01.jpg")):
+        imgdata = open(os.path.join(release.dest_dir_name,
+                       "00-image-01.jpg")).read()
         imgtype = imghdr.what(None, imgdata)
 
         if imgtype in ("jpeg", "png"):
@@ -115,12 +115,12 @@ for track in release.tag_map:
 
     metadata.save()
 
-# 
+#
 # start supplementary actions
 #
 logging.info("Generating .nfo file")
 create_nfo(release.album.album_info, release.dest_dir_name,
-            release.nfo_filename)
+           release.nfo_filename)
 
 logging.info("Generating .m3u file")
 create_m3u(release.tag_map, release.dest_dir_name, release.m3u_filename)
@@ -128,6 +128,6 @@ create_m3u(release.tag_map, release.dest_dir_name, release.m3u_filename)
 # remove source directory, if configured as such.
 if not keep_original:
     logging.info("Deleting source directory '%s'" % options.sdir)
-    shutil.rmtree(options.sdir) 
+    shutil.rmtree(options.sdir)
 
 logging.info("Tagging complete.")

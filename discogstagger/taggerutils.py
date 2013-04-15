@@ -7,7 +7,7 @@ import sys
 import logging
 from unicodedata import normalize
 
-from discogsalbum import DiscogsAlbum, TrackContainer 
+from discogsalbum import DiscogsAlbum, TrackContainer
 
 reload(sys)
 sys.setdefaultencoding("utf-8")
@@ -21,7 +21,8 @@ class TagOpener(FancyURLopener, object):
 
     def __init__(self):
         FancyURLopener.__init__(self)
-    
+
+
 class TaggerUtils(object):
     """ Accepts a destination directory name and discogs release id.
         TaggerUtils returns a the corresponding metadata information , in which
@@ -30,23 +31,22 @@ class TaggerUtils(object):
 
         The class also provides a few methods that create supplimental files,
         relvant to a given album (m3u, nfo file and album art grabber.)"""
-        
 
     CHAR_EXCEPTIONS = {
-        "&" : "and",
-        " " : "_", 
+        "&": "and",
+        " ": "_",
     }
 
     # supported file types.
     FILE_TYPE = (".mp3", ".flac",)
-    
+
     def __init__(self, sourcedir, ogsrelid):
         self.group_name = "jW"
         self.dir_format = "%ALBARTIST%-%ALBTITLE%-(%CATNO%)-%YEAR%-%GROUP%"
         self.m3u_format = "00-%ALBARTIST%-%ALBTITLE%.m3u"
         self.nfo_format = "00-%ALBARTIST%-%ALBTITLE%.nfo"
         self.song_format = "%TRACKNO%-%ARTIST%-%TITLE%%TYPE%"
-        
+
         self.sourcedir = sourcedir
         self.files_to_tag = self._get_target_list()
         self.album = DiscogsAlbum(ogsrelid)
@@ -55,7 +55,7 @@ class TaggerUtils(object):
             self.tag_map = self._get_tag_map()
         else:
             self.tag_map = False
-        
+
     def _value_from_tag(self, fileformat, trackno=1, filetype=".mp3"):
         """ Generates the filename tagging map """
 
@@ -74,7 +74,8 @@ class TaggerUtils(object):
         }
 
         for hashtag in property_map.keys():
-            fileformat = fileformat.replace(hashtag, str(property_map[hashtag]))
+            fileformat = fileformat.replace(hashtag,
+                                            str(property_map[hashtag]))
         return fileformat
 
     def _get_target_list(self):
@@ -96,33 +97,34 @@ class TaggerUtils(object):
     def _get_tag_map(self):
         """ matches the old with new via TargetTagMap object. """
 
-        tag_map = [] 
+        tag_map = []
 
         # ignore files that do not match FILE_TYPE
         for position, filename in enumerate(self.files_to_tag):
             # add the found files to the tag_map list
-            logger.debug("mapping file %s --to--> %s - %s" % (filename, 
-                self.album.tracks[position].artist,
-                self.album.tracks[position].title))
+            logger.debug("mapping file %s --to--> %s - %s" % (filename,
+                         self.album.tracks[position].artist,
+                         self.album.tracks[position].title))
             track = TrackContainer()
             track.position = position + 1
             track.orig_file = filename
             fileext = os.path.splitext(filename)[1]
-            newfile = self._value_from_tag(self.song_format, track.position, fileext)
+            newfile = self._value_from_tag(self.song_format,
+                                           track.position, fileext)
             track.new_file = get_clean_filename(newfile)
             track.artist = self.album.tracks[position].artist
             track.title = self.album.tracks[position].title
             tag_map.append(track)
 
-        return tag_map 
-        
+        return tag_map
+
     @property
     def dest_dir_name(self):
         """ generates new album directory name """
 
         path_name = os.path.dirname(self.sourcedir)
         dest_dir = get_clean_filename(self._value_from_tag(self.dir_format))
-        
+
         return os.path.join(path_name, dest_dir)
 
     @property
@@ -135,7 +137,7 @@ class TaggerUtils(object):
     @property
     def nfo_filename(self):
         """ generates the nfo file name """
-        
+
         nfo = self._value_from_tag(self.nfo_format)
         return get_clean_filename(nfo)
 
@@ -145,13 +147,14 @@ def get_clean_filename(f):
 
     a = unicode(f, "utf-8")
 
-    for k,v in TaggerUtils.CHAR_EXCEPTIONS.iteritems():
+    for k, v in TaggerUtils.CHAR_EXCEPTIONS.iteritems():
         a = a.replace(k, v)
 
     a = normalize("NFKD", a).encode("ascii", "ignore")
 
     cf = re.compile(r"[^-\w.\(\)_]")
     return cf.sub("", str(a))
+
 
 def write_file(filecontents, filename):
     """ writes a string of data to disk """
@@ -163,16 +166,18 @@ def write_file(filecontents, filename):
 
     try:
         with open(filename, "w") as fh:
-            fh.write(filecontents) 
+            fh.write(filecontents)
     except IOError:
         logging.error("Unable to write file '%s'" % filename)
 
     return True
-        
+
+
 def create_nfo(nfo, dest_dir, nfo_file):
     """ Writes the .nfo file to disk. """
 
     return write_file(nfo, os.path.join(dest_dir, nfo_file))
+
 
 def create_m3u(tag_map, dest_dir_name, m3u_filename):
     """ Generates the playlist for the given albm.
@@ -188,12 +193,13 @@ def create_m3u(tag_map, dest_dir_name, m3u_filename):
 
         Taken from http://forums.winamp.com/showthread.php?s=&threadid=65772"""
 
-    m3u =  "#EXTM3U\n"
+    m3u = "#EXTM3U\n"
     for track in tag_map:
         m3u += "#EXTINF:-1,%s - %s\n" % (track.artist, track.title)
         m3u += "%s\n" % track.new_file
 
     return write_file(m3u, os.path.join(dest_dir_name, m3u_filename))
+
 
 def get_images(images, dest_dir_name):
     """ Download and store any available images """
@@ -204,7 +210,8 @@ def get_images(images, dest_dir_name):
             try:
                 url_fh = TagOpener()
                 url_fh.retrieve(image, os.path.join(dest_dir_name,
-                        "00-image-%.2d.jpg" % i))
+                                "00-image-%.2d.jpg" % i))
             except Exception as e:
-                logging.error("Unable to download image '%s', skipping." % image)
+                logging.error("Unable to download image '%s', skipping."
+                              % image)
                 print e

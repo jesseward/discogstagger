@@ -1,5 +1,9 @@
 ## Changelog
 
+Version 1.0.1
+
+* style clean-up
+
 Version 1.0.0
 * feature : options to embed cover art into metadata (issue #4)
 * feature : now supports mp4/asf formats (in addition to mp3/flac) via
