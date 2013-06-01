@@ -65,6 +65,7 @@ class TaggerUtils(object):
             "%YEAR%": self.album.year,
             "%CATNO%": self.album.catno,
             "%GENRE%": self.album.genre,
+            "%STYLE%": self.album.styles[0],
             "%GROUP%": self.group_name,
             "%ARTIST%": self.album.tracks[trackno-1].artist,
             "%TITLE%": self.album.tracks[trackno-1].title,
