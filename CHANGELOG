@@ -1,5 +1,14 @@
 ## Changelog
 
+Version 1.1.0
+
+* improvement: use genre from discogs as the genre (configurable, so that you are still
+               able to use style like in previous versions)
+* feature: add possiblity to provide a separate destination directory (-d)
+* feature: add possiblity to provide the release id via a file in the source
+           directory. The name of the file as well as the name of the used key
+           is configurable, a default configuration is provided
+
 Version 1.0.1
 
 * style clean-up
