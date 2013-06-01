@@ -28,21 +28,36 @@ p.add_option("-c", "--conf", action="store", dest="conffile",
 p.set_defaults(conffile="/etc/discogstagger/discogs_tagger.conf")
 (options, args) = p.parse_args()
 
-if not options.releaseid:
-    p.error("Please specify the discogs.com releaseid ('-r')")
-
 if not options.sdir or not os.path.exists(options.sdir):
     p.error("Please specify a valid source directory ('-s')")
+
+if not options.releaseid:
+    if not os.path.exists(os.path.join(options.sdir, "id.txt")):
+        p.error("Please specify the discogs.com releaseid ('-r')")
+    else:
+        myids = {}
+        with open(os.path.join(options.sdir, "id.txt")) as idFile:
+            for line in idFile:
+                name, var = line.partition("=")[::2]
+                myids[name.strip()] =  var
+        if "discogs_id" in myids:
+            releaseid = myids["discogs_id"].strip()
+else:
+    releaseid = options.releaseid
+
+if not releaseid:
+    p.error("Please specify the discogs.com releaseid ('-r')")
 
 config = ConfigParser.ConfigParser()
 config.read(options.conffile)
 
 logging.basicConfig(level=config.getint("logging", "level"))
+logging.info("Determine discogs release: %s", releaseid)
 
 keep_original = config.getboolean("details", "keep_original")
 embed_coverart = config.getboolean("details", "embed_coverart")
 
-release = TaggerUtils(options.sdir, options.releaseid)
+release = TaggerUtils(options.sdir, releaseid)
 release.nfo_format = config.get("file-formatting", "nfo")
 release.m3u_format = config.get("file-formatting", "m3u")
 release.dir_format = config.get("file-formatting", "dir")
@@ -52,7 +67,7 @@ release.group_name = config.get("details", "group")
 # ensure we were able to map the release appropriately.
 if not release.tag_map:
     logging.error("Unable to match file list to discogs release '%s'" %
-                  options.releaseid)
+                  releaseid)
     sys.exit()
 
 #
