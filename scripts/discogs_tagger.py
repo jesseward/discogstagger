@@ -31,28 +31,30 @@ p.set_defaults(conffile="/etc/discogstagger/discogs_tagger.conf")
 if not options.sdir or not os.path.exists(options.sdir):
     p.error("Please specify a valid source directory ('-s')")
 
+config = ConfigParser.ConfigParser()
+config.read(options.conffile)
+
+logging.basicConfig(level=config.getint("logging", "level"))
+
+id_file = config.get("batch", "id_file")
+id_tag = config.get("batch", "id_tag")
+
 if not options.releaseid:
-    if not os.path.exists(os.path.join(options.sdir, "id.txt")):
+    if not os.path.exists(os.path.join(options.sdir, id_file)):
         p.error("Please specify the discogs.com releaseid ('-r')")
     else:
         myids = {}
-        with open(os.path.join(options.sdir, "id.txt")) as idFile:
+        with open(os.path.join(options.sdir, id_file)) as idFile:
             for line in idFile:
                 name, var = line.partition("=")[::2]
                 myids[name.strip()] =  var
-        if "discogs_id" in myids:
-            releaseid = myids["discogs_id"].strip()
+        if id_tag in myids:
+            releaseid = myids[id_tag].strip()
 else:
     releaseid = options.releaseid
 
 if not releaseid:
     p.error("Please specify the discogs.com releaseid ('-r')")
-
-config = ConfigParser.ConfigParser()
-config.read(options.conffile)
-
-logging.basicConfig(level=config.getint("logging", "level"))
-logging.info("Determine discogs release: %s", releaseid)
 
 keep_original = config.getboolean("details", "keep_original")
 embed_coverart = config.getboolean("details", "embed_coverart")
