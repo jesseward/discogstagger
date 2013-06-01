@@ -40,7 +40,7 @@ class TaggerUtils(object):
     # supported file types.
     FILE_TYPE = (".mp3", ".flac",)
 
-    def __init__(self, sourcedir, ogsrelid):
+    def __init__(self, sourcedir, destdir, ogsrelid):
         self.group_name = "jW"
         self.dir_format = "%ALBARTIST%-%ALBTITLE%-(%CATNO%)-%YEAR%-%GROUP%"
         self.m3u_format = "00-%ALBARTIST%-%ALBTITLE%.m3u"
@@ -48,6 +48,7 @@ class TaggerUtils(object):
         self.song_format = "%TRACKNO%-%ARTIST%-%TITLE%%TYPE%"
 
         self.sourcedir = sourcedir
+        self.destdir = destdir
         self.files_to_tag = self._get_target_list()
         self.album = DiscogsAlbum(ogsrelid)
 
@@ -122,7 +123,7 @@ class TaggerUtils(object):
     def dest_dir_name(self):
         """ generates new album directory name """
 
-        path_name = os.path.dirname(self.sourcedir)
+        path_name = os.path.dirname(self.destdir)
         dest_dir = get_clean_filename(self._value_from_tag(self.dir_format))
 
         return os.path.join(path_name, dest_dir)
