@@ -30,9 +30,6 @@ p.add_option("-c", "--conf", action="store", dest="conffile",
 p.set_defaults(conffile="/etc/discogstagger/discogs_tagger.conf")
 (options, args) = p.parse_args()
 
-if not options.releaseid:
-    p.error("Please specify the discogs.com releaseid ('-r')")
-
 if not options.sdir or not os.path.exists(options.sdir):
     p.error("Please specify a valid source directory ('-s')")
 
@@ -46,11 +43,31 @@ config.read(options.conffile)
 
 logging.basicConfig(level=config.getint("logging", "level"))
 
+id_file = config.get("batch", "id_file")
+id_tag = config.get("batch", "id_tag")
+
+if not options.releaseid:
+    if not os.path.exists(os.path.join(options.sdir, id_file)):
+        p.error("Please specify the discogs.com releaseid ('-r')")
+    else:
+        myids = {}
+        with open(os.path.join(options.sdir, id_file)) as idFile:
+            for line in idFile:
+                name, var = line.partition("=")[::2]
+                myids[name.strip()] =  var
+        if id_tag in myids:
+            releaseid = myids[id_tag].strip()
+else:
+    releaseid = options.releaseid
+
+if not releaseid:
+    p.error("Please specify the discogs.com releaseid ('-r')")
+
 keep_original = config.getboolean("details", "keep_original")
 embed_coverart = config.getboolean("details", "embed_coverart")
 use_style = config.getboolean("details", "use_style")
 
-release = TaggerUtils(options.sdir, destdir, options.releaseid)
+release = TaggerUtils(options.sdir, destdir, releaseid)
 release.nfo_format = config.get("file-formatting", "nfo")
 release.m3u_format = config.get("file-formatting", "m3u")
 release.dir_format = config.get("file-formatting", "dir")
@@ -60,7 +77,7 @@ release.group_name = config.get("details", "group")
 # ensure we were able to map the release appropriately.
 if not release.tag_map:
     logging.error("Unable to match file list to discogs release '%s'" %
-                  options.releaseid)
+                  releaseid)
     sys.exit()
 
 #
@@ -115,6 +132,7 @@ for track in release.tag_map:
     metadata.genre = genre
     metadata.track = track.position
     metadata.tracktotal = len(release.tag_map)
+    metadata.discogs_id = releaseid
 
     if embed_coverart and os.path.exists(os.path.join(release.dest_dir_name,
                                          "00-image-01.jpg")):

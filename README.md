@@ -10,6 +10,11 @@ album consisting of either FLAC or MP3 media files and the discogs.com
 release-id. discogstaggs calls out to the discogs.com API and updates the
 audio meta-data accordingly.
 
+If no release-id is given, the application checks, if a file "id.txt" exists
+(the name of this file can be configured in the configuration) and if this file
+contains a specific property (id_tag). If both is true the release-id from this
+file is used. This is useful for batch processing.
+
 During the process, all album images (if present) are retrieved from the API. 
 As well, a play-list (.m3u) and an information file (.nfo) are generated per
 each release.
