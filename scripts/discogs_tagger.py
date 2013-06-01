@@ -119,6 +119,7 @@ for track in release.tag_map:
     metadata.genre = release.album.genre
     metadata.track = track.position
     metadata.tracktotal = len(release.tag_map)
+    metadata.discogs_id = releaseid
 
     if embed_coverart and os.path.exists(os.path.join(release.dest_dir_name,
                                          "00-image-01.jpg")):
