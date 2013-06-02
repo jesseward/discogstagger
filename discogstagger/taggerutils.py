@@ -35,6 +35,12 @@ class TaggerUtils(object):
     CHAR_EXCEPTIONS = {
         "&": "and",
         " ": "_",
+        "ö": "oe",
+        "Ö": "Oe",
+        "Ä": "Ae",
+        "ä": "ae",
+        "Ü": "Ue",
+        "ü": "ue",
     }
 
     # supported file types.
