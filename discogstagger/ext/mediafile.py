@@ -1175,6 +1175,16 @@ class MediaFile(object):
     # Album art.
     art = ImageField()
 
+    # Discogs ID.
+    discogs_id = MediaField(
+        mp3 = StorageStyle('discogs_id',
+                            id3_desc=u'DiscogsId'),
+        mp4 = StorageStyle('----:com.apple.iTunes:Discogs Release Id',
+                           as_type=str),
+        etc = StorageStyle('discogs_id'),
+        asf = StorageStyle('Discogs/Release Id'),
+    )
+
     # FreeDB ID.
     freedb_id = MediaField(
         mp3 = StorageStyle('discid',
