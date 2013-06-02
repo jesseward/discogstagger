@@ -22,6 +22,8 @@ p.add_option("-r", "--releaseid", action="store", dest="releaseid",
              help="The discogs.com release id of the target album")
 p.add_option("-s", "--source", action="store", dest="sdir",
              help="The directory that you wish to tag")
+p.add_option("-d", "--destination", action="store", dest="destdir",
+             help="The (base) directory to copy the tagged files to")
 p.add_option("-c", "--conf", action="store", dest="conffile",
              help="The discogstagger configuration file.")
 
@@ -34,6 +36,11 @@ if not options.releaseid:
 if not options.sdir or not os.path.exists(options.sdir):
     p.error("Please specify a valid source directory ('-s')")
 
+if not options.destdir or not os.path.exists(options.destdir):
+    destdir = options.sdir
+else:
+    destdir = options.destdir
+
 config = ConfigParser.ConfigParser()
 config.read(options.conffile)
 
@@ -43,7 +50,7 @@ keep_original = config.getboolean("details", "keep_original")
 embed_coverart = config.getboolean("details", "embed_coverart")
 use_style = config.getboolean("details", "use_style")
 
-release = TaggerUtils(options.sdir, options.releaseid)
+release = TaggerUtils(options.sdir, destdir, options.releaseid)
 release.nfo_format = config.get("file-formatting", "nfo")
 release.m3u_format = config.get("file-formatting", "m3u")
 release.dir_format = config.get("file-formatting", "dir")
