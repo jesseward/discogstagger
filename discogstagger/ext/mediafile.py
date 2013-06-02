@@ -805,6 +805,7 @@ class ImageField(object):
             if val is not None:
                 pic = mutagen.flac.Picture()
                 pic.data = val
+                pic.type = 3 # front cover
                 pic.mime = self._mime(val)
                 obj.mgfile.add_picture(pic)
 
@@ -833,6 +834,7 @@ class ImageField(object):
             if val is not None:
                 pic = mutagen.flac.Picture()
                 pic.data = val
+                pic.type = 3 # front cover (VORBIS Standard)
                 pic.mime = self._mime(val)
                 obj.mgfile['metadata_block_picture'] = [
                     base64.b64encode(pic.write())
@@ -1172,6 +1174,16 @@ class MediaFile(object):
 
     # Album art.
     art = ImageField()
+
+    # FreeDB ID.
+    freedb_id = MediaField(
+        mp3 = StorageStyle('discid',
+                            id3_desc=u'DiscId'),
+        mp4 = StorageStyle('----:com.apple.iTunes:FreeDB DiscId',
+                           as_type=str),
+        etc = StorageStyle('DISCID'),
+        asf = StorageStyle('FreeDB/discid'),
+    )
 
     # MusicBrainz IDs.
     mb_trackid = MediaField(

@@ -17,6 +17,16 @@ from discogstagger.taggerutils import (
 
 logger = logging.getLogger(__name__)
 
+import os, errno
+
+def mkdir_p(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc: # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else: raise
+
 p = OptionParser()
 p.add_option("-r", "--releaseid", action="store", dest="releaseid",
              help="The discogs.com release id of the target album")
@@ -33,15 +43,18 @@ p.set_defaults(conffile="/etc/discogstagger/discogs_tagger.conf")
 if not options.sdir or not os.path.exists(options.sdir):
     p.error("Please specify a valid source directory ('-s')")
 
-if not options.destdir or not os.path.exists(options.destdir):
-    destdir = options.sdir
-else:
-    destdir = options.destdir
-
 config = ConfigParser.ConfigParser()
 config.read(options.conffile)
 
 logging.basicConfig(level=config.getint("logging", "level"))
+
+if not options.destdir:
+    destdir = options.sdir
+else:
+    destdir = options.destdir
+    logging.info("destdir set to %s", options.destdir)
+
+logging.info("Using destination director: %s", destdir)
 
 id_file = config.get("batch", "id_file")
 id_tag = config.get("batch", "id_tag")
@@ -66,6 +79,7 @@ if not releaseid:
 keep_original = config.getboolean("details", "keep_original")
 embed_coverart = config.getboolean("details", "embed_coverart")
 use_style = config.getboolean("details", "use_style")
+keep_tags = config.get("details", "keep_tags")
 
 release = TaggerUtils(options.sdir, destdir, releaseid)
 release.nfo_format = config.get("file-formatting", "nfo")
@@ -92,7 +106,7 @@ if os.path.exists(release.dest_dir_name):
 else:
     logging.info("Creating destination directory '%s'" %
                  release.dest_dir_name)
-    os.mkdir(release.dest_dir_name)
+    mkdir_p(release.dest_dir_name)
 
 logging.info("Downloading and storing images")
 get_images(release.album.images, release.dest_dir_name)
@@ -110,6 +124,12 @@ for track in release.tag_map:
     # load metadata information
     metadata = MediaFile(os.path.join(
                          release.dest_dir_name, track.new_file))
+    # read already existing (and still wanted) properties
+    keepTags = {}
+    for name in keep_tags.split(","):
+        if getattr(metadata, name):
+            keepTags[name] = getattr(metadata, name)
+
     # remove current metadata
     metadata.delete()
     metadata.title = track.title
@@ -143,6 +163,10 @@ for track in release.tag_map:
         if imgtype in ("jpeg", "png"):
             logger.info("Embedding album art.")
             metadata.art = imgdata
+
+    if not keepTags is None:
+        for name in keepTags:
+            setattr(metadata, name, keepTags[name])
 
     metadata.save()
 
