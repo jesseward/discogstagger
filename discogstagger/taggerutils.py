@@ -40,7 +40,7 @@ class TaggerUtils(object):
     # supported file types.
     FILE_TYPE = (".mp3", ".flac",)
 
-    def __init__(self, sourcedir, destdir, ogsrelid):
+    def __init__(self, sourcedir, destdir, use_lower, ogsrelid):
         self.group_name = "jW"
         self.dir_format = "%ALBARTIST%-%ALBTITLE%-(%CATNO%)-%YEAR%-%GROUP%"
         self.m3u_format = "00-%ALBARTIST%-%ALBTITLE%.m3u"
@@ -51,6 +51,7 @@ class TaggerUtils(object):
         self.destdir = destdir
         self.files_to_tag = self._get_target_list()
         self.album = DiscogsAlbum(ogsrelid)
+        self.use_lower = use_lower
 
         if len(self.files_to_tag) == len(self.album.tracks):
             self.tag_map = self._get_tag_map()
@@ -78,6 +79,10 @@ class TaggerUtils(object):
         for hashtag in property_map.keys():
             fileformat = fileformat.replace(hashtag,
                                             str(property_map[hashtag]))
+
+        if self.use_lower:
+            fileformat = fileformat.lower()
+
         return fileformat
 
     def _get_target_list(self):

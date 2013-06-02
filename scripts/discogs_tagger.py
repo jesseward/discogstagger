@@ -79,9 +79,10 @@ if not releaseid:
 keep_original = config.getboolean("details", "keep_original")
 embed_coverart = config.getboolean("details", "embed_coverart")
 use_style = config.getboolean("details", "use_style")
+use_lower_filenames = config.getboolean("details", "use_lower_filenames")
 keep_tags = config.get("details", "keep_tags")
 
-release = TaggerUtils(options.sdir, destdir, releaseid)
+release = TaggerUtils(options.sdir, destdir, use_lower_filenames, releaseid)
 release.nfo_format = config.get("file-formatting", "nfo")
 release.m3u_format = config.get("file-formatting", "m3u")
 release.dir_format = config.get("file-formatting", "dir")
@@ -100,30 +101,32 @@ if not release.tag_map:
 logging.info("Tagging album '%s - %s'" % (release.album.artist,
              release.album.title))
 
-if os.path.exists(release.dest_dir_name):
-    logging.error("Destination already exists %s" % release.dest_dir_name)
-    sys.exit("%s directory already exists, aborting." % release.dest_dir_name)
+dest_dir_name = release.dest_dir_name
+
+if os.path.exists(dest_dir_name):
+    logging.error("Destination already exists %s" % dest_dir_name)
+    sys.exit("%s directory already exists, aborting." % dest_dir_name)
 else:
     logging.info("Creating destination directory '%s'" %
-                 release.dest_dir_name)
-    mkdir_p(release.dest_dir_name)
+                 dest_dir_name)
+    mkdir_p(dest_dir_name)
 
 logging.info("Downloading and storing images")
-get_images(release.album.images, release.dest_dir_name)
+get_images(release.album.images, dest_dir_name)
 
 for track in release.tag_map:
-    logger.info("Writing file %s" % os.path.join(release.dest_dir_name,
+    logger.info("Writing file %s" % os.path.join(dest_dir_name,
                 track.new_file))
     logger.debug("metadata -> %.2d %s - %s" % (track.position, track.artist,
                  track.title))
 
     # copy old file into new location
     shutil.copyfile(os.path.join(options.sdir, track.orig_file),
-                    os.path.join(release.dest_dir_name, track.new_file))
+                    os.path.join(dest_dir_name, track.new_file))
 
     # load metadata information
     metadata = MediaFile(os.path.join(
-                         release.dest_dir_name, track.new_file))
+                         dest_dir_name, track.new_file))
     # read already existing (and still wanted) properties
     keepTags = {}
     for name in keep_tags.split(","):
@@ -154,9 +157,9 @@ for track in release.tag_map:
     metadata.tracktotal = len(release.tag_map)
     metadata.discogs_id = releaseid
 
-    if embed_coverart and os.path.exists(os.path.join(release.dest_dir_name,
+    if embed_coverart and os.path.exists(os.path.join(dest_dir_name,
                                          "00-image-01.jpg")):
-        imgdata = open(os.path.join(release.dest_dir_name,
+        imgdata = open(os.path.join(dest_dir_name,
                        "00-image-01.jpg")).read()
         imgtype = imghdr.what(None, imgdata)
 
@@ -174,11 +177,10 @@ for track in release.tag_map:
 # start supplementary actions
 #
 logging.info("Generating .nfo file")
-create_nfo(release.album.album_info, release.dest_dir_name,
-           release.nfo_filename)
+create_nfo(release.album.album_info, dest_dir_name, release.nfo_filename)
 
 logging.info("Generating .m3u file")
-create_m3u(release.tag_map, release.dest_dir_name, release.m3u_filename)
+create_m3u(release.tag_map, dest_dir_name, release.m3u_filename)
 
 # remove source directory, if configured as such.
 if not keep_original:
