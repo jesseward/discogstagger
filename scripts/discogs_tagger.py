@@ -41,6 +41,7 @@ logging.basicConfig(level=config.getint("logging", "level"))
 
 keep_original = config.getboolean("details", "keep_original")
 embed_coverart = config.getboolean("details", "embed_coverart")
+use_style = config.getboolean("details", "use_style")
 
 release = TaggerUtils(options.sdir, options.releaseid)
 release.nfo_format = config.get("file-formatting", "nfo")
@@ -99,7 +100,12 @@ for track in release.tag_map:
     # mediafile uses TXXX desc="CATALOGNUMBER"
     metadata.catalognum = release.album.catno
     metadata.catalognumber = release.album.catno
-    metadata.genre = release.album.genre
+
+    genre = release.album.genre
+    if use_style:
+        genre = release.album.styles[0]
+
+    metadata.genre = genre
     metadata.track = track.position
     metadata.tracktotal = len(release.tag_map)
 

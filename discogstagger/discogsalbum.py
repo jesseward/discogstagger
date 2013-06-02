@@ -122,7 +122,13 @@ class DiscogsAlbum(object):
     def genre(self):
         """ obtain the album genre """
 
-        return self.release.data["styles"][0]
+        return self.release.data["genres"][0]
+
+    @property
+    def styles(self):
+        """ obtain the album styles """
+
+        return self.release.data["styles"]
 
     def _gen_artist(self, artist_data):
         """ yields a list of normalized release artists name properties """
