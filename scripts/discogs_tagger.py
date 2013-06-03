@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 import os
 import errno
@@ -49,12 +49,12 @@ config.read(options.conffile)
 logging.basicConfig(level=config.getint("logging", "level"))
 
 if not options.destdir:
-    destdir = options.sdir
+    destdir = None
 else:
     destdir = options.destdir
     logging.info("destdir set to %s", options.destdir)
 
-logging.info("Using destination director: %s", destdir)
+logging.info("Using destination directory: %s", destdir)
 
 id_file = config.get("batch", "id_file")
 id_tag = config.get("batch", "id_tag")
@@ -81,6 +81,7 @@ embed_coverart = config.getboolean("details", "embed_coverart")
 use_style = config.getboolean("details", "use_style")
 use_lower_filenames = config.getboolean("details", "use_lower_filenames")
 keep_tags = config.get("details", "keep_tags")
+
 
 release = TaggerUtils(options.sdir, destdir, use_lower_filenames, releaseid)
 release.nfo_format = config.get("file-formatting", "nfo")

@@ -135,10 +135,14 @@ class TaggerUtils(object):
     def dest_dir_name(self):
         """ generates new album directory name """
 
-        path_name = os.path.dirname(self.destdir)
-        dest_dir = get_clean_filename(self._value_from_tag(self.dir_format))
+        if self.destdir is None:
+            path_name = os.path.dirname(os.path.normpath(self.sourcedir))
+            dest_dir = get_clean_filename(self._value_from_tag(self.dir_format))
+            dir_name = os.path.join(path_name, dest_dir)
+        else:
+            dir_name = self.destdir
 
-        return os.path.join(path_name, dest_dir)
+        return dir_name
 
     @property
     def m3u_filename(self):

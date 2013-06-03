@@ -1177,8 +1177,7 @@ class MediaFile(object):
 
     # Discogs ID.
     discogs_id = MediaField(
-        mp3 = StorageStyle('discogs_id',
-                            id3_desc=u'DiscogsId'),
+        mp3 = StorageStyle('TXXX', id3_desc=u'DiscogsId'),
         mp4 = StorageStyle('----:com.apple.iTunes:Discogs Release Id',
                            as_type=str),
         etc = StorageStyle('discogs_id'),
@@ -1187,8 +1186,7 @@ class MediaFile(object):
 
     # FreeDB ID.
     freedb_id = MediaField(
-        mp3 = StorageStyle('discid',
-                            id3_desc=u'DiscId'),
+        mp3 = StorageStyle('TXXX', id3_desc=u'DiscId'),
         mp4 = StorageStyle('----:com.apple.iTunes:FreeDB DiscId',
                            as_type=str),
         etc = StorageStyle('DISCID'),
