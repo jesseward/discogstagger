@@ -49,7 +49,7 @@ config.read(options.conffile)
 logging.basicConfig(level=config.getint("logging", "level"))
 
 if not options.destdir:
-    destdir = None
+    destdir = options.sdir
 else:
     destdir = options.destdir
     logging.info("destdir set to %s", options.destdir)
