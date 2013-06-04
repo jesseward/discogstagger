@@ -67,6 +67,58 @@ keep_original=True
 embed_coverart=False
 ```
 
+To keep already existing tags, you can include these tags in the configuration as well. 
+Usually Rippsers (e.g. RubyRipper) do include the freedb_id, which could be kept using
+the following configuration. The list of all tags could be taken from the file 
+discogstagger/ext/mediafile.py.
+
+```
+# Keep the following tags
+keep_tags=freedb_id
+```
+
+Furthermore you can use lowercase directory and filenames using the following configurtion:
+
+```
+# Use lowercase filenames
+use_lower_filenames=True
+```
+
+For batch-mode tagging, it is not necessary anymore to provide the release-id via the
+'-r' parameter on the commandline. The same is possible by using a file (by default: id.txt)
+with the key/value pair 'discogs_id'. This can be configured in the configuration via the
+following parameters as well:
+
+```
+[batch]
+# if no release id is given, the application checks if a file with the
+# name id_file (in this case id.txt) is in the source directory,
+# if it is there the id_tag is checked (discogs_id) and assigned to the
+# release id
+id_file=id.txt
+id_tag=discogs_id
+```
+
+Please note, that right now there is no error-handling, if there is no '-r' parameter
+and no id.txt file. The program will then just exit with an error message.
+
+The command line takes the following parameters:
+
+```
+Usage: discogs_tagger.py [options]
+
+Options:
+  -h, --help            show this help message and exit
+  -r RELEASEID, --releaseid=RELEASEID
+                        The discogs.com release id of the target album
+  -s SDIR, --source=SDIR
+                        The directory that you wish to tag
+  -d DESTDIR, --destination=DESTDIR
+                        The (base) directory to copy the tagged files to
+  -c CONFFILE, --conf=CONFFILE
+                        The discogstagger configuration file.
+```
+
 ## Examples
 
 ```
