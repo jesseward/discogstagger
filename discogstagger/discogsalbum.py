@@ -137,11 +137,39 @@ class DiscogsAlbum(object):
             yield x.name
 
     @property
+    def country(self):
+        """ Obtain the country - a not so easy field, because it could mean
+            the label country, the recording country, or.... """
+
+        return self.release["country"]
+
+    @property
     def artist(self):
         """ obtain the album artist """
 
         rel_artist = " & ".join(self._gen_artist(self.release.artists))
         return self.clean_name(rel_artist)
+
+    @property
+    def note(self):
+        """ obtain the note """
+
+        return self.release.data["notes"]
+
+    def disc_and_track_no(self, position):
+        """ obtain the disc and tracknumber from given position """
+        idx = pos.index("-")
+        tracknumber = pos[idx + 1:]
+        discnumber = pos[:idx]
+
+        return {'tracknumber': tracknumber, 'discnumber': discnumber}
+
+    @property
+    def disctotal(self):
+#        t = self.release.tracklist[-1]
+#        pos = disc_and_track_no(t["position"])
+#        return pos["discnumber"]
+        return self.release.formats[0].qty
 
     @property
     def tracks(self):
@@ -157,9 +185,16 @@ class DiscogsAlbum(object):
 
             track = TrackContainer()
             track.position = i + 1
+            if "-" in t["position"]:
+                pos = disc_and_track_no(t["position"])
+                track.tracknumber = pos["tracknumber"]
+                track.discnumber = pos["discnumber"]
+            else:
+                track.discnumber = -1
             track.artist = artist
             track.title = t["title"]
             track_list.append(track)
+
         return track_list
 
     @staticmethod

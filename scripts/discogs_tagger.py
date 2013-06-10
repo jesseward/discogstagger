@@ -81,14 +81,20 @@ embed_coverart = config.getboolean("details", "embed_coverart")
 use_style = config.getboolean("details", "use_style")
 use_lower_filenames = config.getboolean("details", "use_lower_filenames")
 keep_tags = config.get("details", "keep_tags")
-
+use_folder_jpg = config.getboolean("details", "use_folder_jpg")
 
 release = TaggerUtils(options.sdir, destdir, use_lower_filenames, releaseid)
 release.nfo_format = config.get("file-formatting", "nfo")
 release.m3u_format = config.get("file-formatting", "m3u")
 release.dir_format = config.get("file-formatting", "dir")
 release.song_format = config.get("file-formatting", "song")
+release.images_format = config.get("file-formatting", "images")
 release.group_name = config.get("details", "group")
+
+release.first_image_name = "folder.jpg"
+
+if not use_folder_jpg:
+    release.first_image_name = release.images_format + "-01.jpg"
 
 # ensure we were able to map the release appropriately.
 if not release.tag_map:
@@ -136,32 +142,50 @@ for track in release.tag_map:
 
     # remove current metadata
     metadata.delete()
-    metadata.title = track.title
-    metadata.artist = track.artist
+
+    # set album metadata
     metadata.album = release.album.title
     metadata.composer = release.album.artist
     metadata.albumartist = release.album.artist
     metadata.label = release.album.label
     metadata.year = release.album.year
-    # adding two are there is no standard. discogstagger pre v1
+    metadata.country = release.album.country
+    # add styles to the grouping tag
+    metadata.grouping = release.album.styles
+    # adding two as there is no standard. discogstagger pre v1
     # used (TXXX desc="Catalog #")
     # mediafile uses TXXX desc="CATALOGNUMBER"
     metadata.catalognum = release.album.catno
     metadata.catalognumber = release.album.catno
 
+    # use the correct genre field, on config use the first style
     genre = release.album.genre
     if use_style:
         genre = release.album.styles[0]
-
     metadata.genre = genre
-    metadata.track = track.position
-    metadata.tracktotal = len(release.tag_map)
     metadata.discogs_id = releaseid
 
+    if track.discnumber > -1:
+        metadata.disc = track.discnumber
+        metadata.disctotal = release.disctotal
+
+    if release.album.artist == "Various":
+        metadata.comp = True
+
+    metadata.comment = release.album.note
+
+    # set track metadata
+    metadata.title = track.title
+    metadata.artist = track.artist
+    metadata.track = track.position
+    metadata.tracktotal = len(release.tag_map)
+
+    first_image_name = release.first_image_name
+
     if embed_coverart and os.path.exists(os.path.join(dest_dir_name,
-                                         "00-image-01.jpg")):
+                                         first_image_name)):
         imgdata = open(os.path.join(dest_dir_name,
-                       "00-image-01.jpg")).read()
+                       first_image_name)).read()
         imgtype = imghdr.what(None, imgdata)
 
         if imgtype in ("jpeg", "png"):

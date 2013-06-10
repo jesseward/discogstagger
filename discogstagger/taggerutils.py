@@ -52,6 +52,8 @@ class TaggerUtils(object):
         self.m3u_format = "00-%ALBARTIST%-%ALBTITLE%.m3u"
         self.nfo_format = "00-%ALBARTIST%-%ALBTITLE%.nfo"
         self.song_format = "%TRACKNO%-%ARTIST%-%TITLE%%TYPE%"
+        self.images_format = "00-image"
+        self.first_image_name = "folder.jpg"
 
         self.sourcedir = sourcedir
         self.destdir = destdir
@@ -224,12 +226,18 @@ def get_images(images, dest_dir_name):
     """ Download and store any available images """
 
     if images:
-        for i, image in enumerate(images, 1):
+        for i, image in enumerate(images, 0):
             logging.debug("Downloading image '%s'" % image)
             try:
                 url_fh = TagOpener()
-                url_fh.retrieve(image, os.path.join(dest_dir_name,
-                                "00-image-%.2d.jpg" % i))
+
+                picture_name = ""
+                if i == 0:
+                    picture_name = "folder.jpg"
+                else:
+                    picture_name = images_format + "-%.2d.jpg" % i
+
+                url_fh.retrieve(image, os.path.join(dest_dir_name, picture_name))
             except Exception as e:
                 logging.error("Unable to download image '%s', skipping."
                               % image)

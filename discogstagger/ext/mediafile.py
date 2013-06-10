@@ -736,7 +736,7 @@ class ImageField(object):
                 return pictures[0].data or None
             else:
                 return None
-        
+
         elif obj.type == 'asf':
             if 'WM/Picture' in obj.mgfile:
                 pictures = obj.mgfile['WM/Picture']
@@ -1047,14 +1047,12 @@ class MediaFile(object):
         etc = StorageStyle('CATALOGNUMBER'),
         asf = StorageStyle('WM/CatalogNo'),
     )
-
     catalognum = MediaField(
         mp3 = StorageStyle('TXXX', id3_desc=u'Catalog #'),
         mp4 = StorageStyle("----:com.apple.iTunes:CATALOGNUM"),
         etc = StorageStyle('CATALOGNUM'),
         asf = StorageStyle('WM/CatalogNum'),
     )
-
     disctitle = MediaField(
         mp3 = StorageStyle('TSST'),
         mp4 = StorageStyle("----:com.apple.iTunes:DISCSUBTITLE"),
