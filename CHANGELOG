@@ -1,5 +1,15 @@
 ## Changelog
 
+Version 1.2.0
+
+* Improvement: add several new tags for each album and track
+* Feature: add possibility to name the first image folder.jpg, so that clients 
+           recognize this picture, even though it is not embedded (Issue #12)
+* Feature: add multi disc support (Issue #14), this does right now just covers
+           the handling of tags (discnumber, discstotal) and does not take 
+           care about the filehandling
+
+
 Version 1.1.0
 
 * improvement: use genre from discogs as the genre (configurable, so that you are still
