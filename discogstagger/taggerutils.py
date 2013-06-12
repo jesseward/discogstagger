@@ -122,19 +122,11 @@ class TaggerUtils(object):
                          self.album.tracks[position].title))
             pos = position + 1
             track = self.album.tracks[position]
-#            track = TrackContainer()
-#            track.position = position + 1
-# add new properties
             track.orig_file = filename
             fileext = os.path.splitext(filename)[1]
             newfile = self._value_from_tag(self.song_format,
                                            track.position, fileext)
             track.new_file = get_clean_filename(newfile)
-#            # this seems to be dirty, in that we do have to define all properties
-#            # again, isn't there a nicer way?
-#            track.artist = self.album.tracks[position].artist
-#            track.title = self.album.tracks[position].title
-            print "discnumber " + str(track.discnumber)
             tag_map.append(track)
 
         return tag_map

@@ -149,6 +149,12 @@ class DiscogsAlbum(object):
         return self.clean_name(rel_artist)
 
     @property
+    def sort_artist(self):
+        """ obtain the album artist """
+
+        return self.release.artists[0].name
+
+    @property
     def note(self):
         """ obtain the note """
 
@@ -164,10 +170,7 @@ class DiscogsAlbum(object):
 
     @property
     def disctotal(self):
-#        t = self.release.tracklist[-1]
-#        pos = disc_and_track_no(t["position"])
-#        return pos["discnumber"]
-        return self.release.data["formats"][0]["qty"]
+        return int(self.release.data["formats"][0]["qty"])
 
     @property
     def tracks(self):
@@ -177,9 +180,11 @@ class DiscogsAlbum(object):
         for i, t in enumerate((x for x in self.release.tracklist
                               if x["type"] == "Track")):
             try:
-                artist = self.clean_name(t["artists"][0].name)
+                sort_artist = t["artists"][0].name
+                artist = self.clean_name(sort_artist)
             except IndexError:
                 artist = self.artist
+                sort_artist = self.sort_artist
 
             track = TrackContainer()
 
@@ -192,7 +197,7 @@ class DiscogsAlbum(object):
 
             track.position = i + 1
 
-            if int(self.disctotal) > 1:
+            if self.disctotal > 1:
                 logging.debug("album is a multi disc release")
                 pos = self.disc_and_track_no(t["position"])
                 track.tracknumber = pos["tracknumber"]
@@ -200,6 +205,8 @@ class DiscogsAlbum(object):
             else:
                 logging.debug("album just contains one disc")
                 track.discnumber = 1
+
+            track.sortartist = sort_artist
 
             track.artist = artist
             track.title = t["title"]

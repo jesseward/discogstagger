@@ -132,6 +132,7 @@ for track in release.tag_map:
     # load metadata information
     metadata = MediaFile(os.path.join(
                          dest_dir_name, track.new_file))
+
     # read already existing (and still wanted) properties
     keepTags = {}
     for name in keep_tags.split(","):
@@ -145,11 +146,13 @@ for track in release.tag_map:
     metadata.album = release.album.title
     metadata.composer = release.album.artist
     metadata.albumartist = release.album.artist
+    metadata.albumartist_sort = release.album.sort_artist
     metadata.label = release.album.label
     metadata.year = release.album.year
     metadata.country = release.album.country
-    # add styles to the grouping tag
-    metadata.grouping = release.album.styles
+    # add styles to the grouping tag (right now, we can just use one)
+    metadata.grouping = release.album.styles[0]
+
     # adding two as there is no standard. discogstagger pre v1
     # used (TXXX desc="Catalog #")
     # mediafile uses TXXX desc="CATALOGNUMBER"
@@ -160,10 +163,12 @@ for track in release.tag_map:
     genre = release.album.genre
     if use_style:
         genre = release.album.styles[0]
+
     metadata.genre = genre
     metadata.discogs_id = releaseid
 
-    if release.album.disctotal and track.discnumber:
+    if release.album.disctotal and release.album.disctotal > 1 and track.discnumber:
+        logging.info("writing disctotal and discnumber")
         metadata.disc = track.discnumber
         metadata.disctotal = release.album.disctotal
 
@@ -175,7 +180,9 @@ for track in release.tag_map:
     # set track metadata
     metadata.title = track.title
     metadata.artist = track.artist
+    metadata.artist_sort = track.sortartist
     metadata.track = track.position
+    # the following value will be wrong, if the disc has a name
     metadata.tracktotal = len(release.tag_map)
 
     first_image_name = release.first_image_name
