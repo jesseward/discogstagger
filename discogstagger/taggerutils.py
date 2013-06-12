@@ -220,7 +220,7 @@ def create_m3u(tag_map, dest_dir_name, m3u_filename):
     return write_file(m3u, os.path.join(dest_dir_name, m3u_filename))
 
 
-def get_images(images, dest_dir_name):
+def get_images(images, dest_dir_name, images_format, first_image_name):
     """ Download and store any available images """
 
     if images:
@@ -231,7 +231,7 @@ def get_images(images, dest_dir_name):
 
                 picture_name = ""
                 if i == 0:
-                    picture_name = "folder.jpg"
+                    picture_name = first_image_name
                 else:
                     picture_name = images_format + "-%.2d.jpg" % i
 

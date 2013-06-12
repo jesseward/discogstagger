@@ -86,13 +86,13 @@ release.nfo_format = config.get("file-formatting", "nfo")
 release.m3u_format = config.get("file-formatting", "m3u")
 release.dir_format = config.get("file-formatting", "dir")
 release.song_format = config.get("file-formatting", "song")
-release.images_format = config.get("file-formatting", "images")
+images_format = config.get("file-formatting", "images")
 release.group_name = config.get("details", "group")
 
-release.first_image_name = "folder.jpg"
+first_image_name = "folder.jpg"
 
 if not use_folder_jpg:
-    release.first_image_name = release.images_format + "-01.jpg"
+    first_image_name = images_format + "-01.jpg"
 
 # ensure we were able to map the release appropriately.
 if not release.tag_map:
@@ -117,7 +117,7 @@ else:
     mkdir_p(dest_dir_name)
 
 logging.info("Downloading and storing images")
-get_images(release.album.images, dest_dir_name)
+get_images(release.album.images, dest_dir_name, images_format, first_image_name)
 
 for track in release.tag_map:
     logging.info("Writing file %s" % os.path.join(dest_dir_name,
