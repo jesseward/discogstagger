@@ -3,9 +3,6 @@ import re
 
 import discogs_client as discogs
 
-logger = logging.getLogger(__name__)
-
-
 class TrackContainer(object):
     """ Class used to describe a tracklisting, typical properties are
         artist, title, position, orig_file, new_file """
@@ -37,7 +34,7 @@ class DiscogsAlbum(object):
 
         self.release = discogs.Release(releaseid)
         discogs.user_agent = "discogstagger +http://github.com/jesseward"
-        logger.info("Fetching %s - %s (%s)" % (self.artist, self.title,
+        logging.info("Fetching %s - %s (%s)" % (self.artist, self.title,
                     releaseid))
 
     def __str__(self):
@@ -49,6 +46,7 @@ class DiscogsAlbum(object):
         """ Dumps the release data to a formatted text string. Formatted for
             .nfo file  """
 
+        logging.debug("Writing nfo file")
         div = "_ _______________________________________________ _ _\n"
         r = div
         r += "  Name : %s - %s\n" % (self.artist, self.title)
@@ -141,7 +139,7 @@ class DiscogsAlbum(object):
         """ Obtain the country - a not so easy field, because it could mean
             the label country, the recording country, or.... """
 
-        return self.release["country"]
+        return self.release.data["country"]
 
     @property
     def artist(self):
@@ -158,9 +156,9 @@ class DiscogsAlbum(object):
 
     def disc_and_track_no(self, position):
         """ obtain the disc and tracknumber from given position """
-        idx = pos.index("-")
-        tracknumber = pos[idx + 1:]
-        discnumber = pos[:idx]
+        idx = position.index("-")
+        tracknumber = position[idx + 1:]
+        discnumber = position[:idx]
 
         return {'tracknumber': tracknumber, 'discnumber': discnumber}
 
@@ -169,7 +167,7 @@ class DiscogsAlbum(object):
 #        t = self.release.tracklist[-1]
 #        pos = disc_and_track_no(t["position"])
 #        return pos["discnumber"]
-        return self.release.formats[0].qty
+        return self.release.data["formats"][0]["qty"]
 
     @property
     def tracks(self):
@@ -184,13 +182,25 @@ class DiscogsAlbum(object):
                 artist = self.artist
 
             track = TrackContainer()
+
+            # on multiple discs there do appears a subtitle as the first "track"
+            # on the cd in discogs, this seems to be wrong, but we would like to
+            # handle it anyway
+            if t["title"] and not t["position"] and not t["duration"]:
+                track.discsubtitle = t["title"]
+                continue
+
             track.position = i + 1
-            if "-" in t["position"]:
-                pos = disc_and_track_no(t["position"])
+
+            if int(self.disctotal) > 1:
+                logging.debug("album is a multi disc release")
+                pos = self.disc_and_track_no(t["position"])
                 track.tracknumber = pos["tracknumber"]
                 track.discnumber = pos["discnumber"]
             else:
-                track.discnumber = -1
+                logging.debug("album just contains one disc")
+                track.discnumber = 1
+
             track.artist = artist
             track.title = t["title"]
             track_list.append(track)

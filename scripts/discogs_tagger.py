@@ -15,8 +15,6 @@ from discogstagger.taggerutils import (
     create_m3u,
     get_images)
 
-logger = logging.getLogger(__name__)
-
 import os, errno
 
 def mkdir_p(path):
@@ -122,9 +120,9 @@ logging.info("Downloading and storing images")
 get_images(release.album.images, dest_dir_name)
 
 for track in release.tag_map:
-    logger.info("Writing file %s" % os.path.join(dest_dir_name,
+    logging.info("Writing file %s" % os.path.join(dest_dir_name,
                 track.new_file))
-    logger.debug("metadata -> %.2d %s - %s" % (track.position, track.artist,
+    logging.debug("metadata -> %.2d %s - %s" % (track.position, track.artist,
                  track.title))
 
     # copy old file into new location
@@ -165,9 +163,9 @@ for track in release.tag_map:
     metadata.genre = genre
     metadata.discogs_id = releaseid
 
-    if track.discnumber > -1:
+    if release.album.disctotal and track.discnumber:
         metadata.disc = track.discnumber
-        metadata.disctotal = release.disctotal
+        metadata.disctotal = release.album.disctotal
 
     if release.album.artist == "Various":
         metadata.comp = True
@@ -189,7 +187,7 @@ for track in release.tag_map:
         imgtype = imghdr.what(None, imgdata)
 
         if imgtype in ("jpeg", "png"):
-            logger.info("Embedding album art.")
+            logging.info("Embedding album art.")
             metadata.art = imgdata
 
     if not keepTags is None:
