@@ -141,7 +141,14 @@ class TaggerUtils(object):
         else:
             path_name = os.path.dirname(os.path.normpath(self.destdir))
 
-        dest_dir = get_clean_filename(self._value_from_tag(self.dir_format))
+        dest_dir = ""
+        for ddir in self.dir_format.split("/"):
+            d_dir = get_clean_filename(self._value_from_tag(ddir))
+            if dest_dir == "":
+                dest_dir = d_dir
+            else:
+                dest_dir = dest_dir + "/" + d_dir
+
         dir_name = os.path.join(path_name, dest_dir)
 
         return dir_name
