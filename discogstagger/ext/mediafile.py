@@ -1182,6 +1182,16 @@ class MediaFile(object):
         asf = StorageStyle('Discogs/Release Id'),
     )
 
+    # URL
+    url = MediaField(
+        mp3 = StorageStyle('TXXX', id3_desc=u'Url'),
+        mp4 = StorageStyle('----:com.apple.iTunes:Discogs Url',
+                           as_type=str),
+        etc = [StorageStyle('URLTAG'),
+                StorageStyle('URL')],
+        asf = StorageStyle('Discogs/Url')
+    )
+
     # FreeDB ID.
     freedb_id = MediaField(
         mp3 = StorageStyle('TXXX', id3_desc=u'DiscId'),

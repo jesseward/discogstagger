@@ -150,6 +150,7 @@ for track in release.tag_map:
     metadata.label = release.album.label
     metadata.year = release.album.year
     metadata.country = release.album.country
+    metadata.url = release.album.url
     # add styles to the grouping tag (right now, we can just use one)
     metadata.grouping = release.album.styles[0]
 
@@ -175,13 +176,14 @@ for track in release.tag_map:
     if release.album.artist == "Various":
         metadata.comp = True
 
-    metadata.comment = release.album.note
+    metadata.comments = release.album.note
 
     # set track metadata
     metadata.title = track.title
     metadata.artist = track.artist
     metadata.artist_sort = track.sortartist
     metadata.track = track.position
+
     # the following value will be wrong, if the disc has a name
     metadata.tracktotal = len(release.tag_map)
 

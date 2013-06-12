@@ -32,8 +32,8 @@ class DiscogsAlbum(object):
 
     def __init__(self, releaseid):
 
-        self.release = discogs.Release(releaseid)
         discogs.user_agent = "discogstagger +http://github.com/jesseward"
+        self.release = discogs.Release(releaseid)
         logging.info("Fetching %s - %s (%s)" % (self.artist, self.title,
                     releaseid))
 
@@ -54,7 +54,7 @@ class DiscogsAlbum(object):
         r += " Genre : %s\n" % (self.genre)
         r += " Catno : %s\n" % (self.catno)
         r += "  Year : %s\n" % (self.year)
-        r += "   URL : http://www.discogs.com/release/%s\n" % self.release._id
+        r += "   URL : %s\n" % (self.url)
 
         if self.master_id:
             r += "Master : http://www.discogs.com/master/%s\n" % self.master_id
@@ -69,6 +69,12 @@ class DiscogsAlbum(object):
         """ retuns the discogs release id """
 
         return self.release._id
+
+    @property
+    def url(self):
+        """ returns the discogs url of this release """
+
+        return "http://www.discogs.com/release/%s" % self.release._id
 
     @property
     def catno(self):
