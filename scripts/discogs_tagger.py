@@ -80,8 +80,11 @@ use_style = config.getboolean("details", "use_style")
 use_lower_filenames = config.getboolean("details", "use_lower_filenames")
 keep_tags = config.get("details", "keep_tags")
 use_folder_jpg = config.getboolean("details", "use_folder_jpg")
+split_artists = config.get("details", "split_artists")
+split_genres_and_styles = config.get("details", "split_genres_and_styles")
 
-release = TaggerUtils(options.sdir, destdir, use_lower_filenames, releaseid)
+release = TaggerUtils(options.sdir, destdir, use_lower_filenames, releaseid, 
+    split_artists, split_genres_and_styles)
 release.nfo_format = config.get("file-formatting", "nfo")
 release.m3u_format = config.get("file-formatting", "m3u")
 release.dir_format = config.get("file-formatting", "dir")
@@ -152,7 +155,7 @@ for track in release.tag_map:
     metadata.country = release.album.country
     metadata.url = release.album.url
     # add styles to the grouping tag (right now, we can just use one)
-    metadata.grouping = release.album.styles[0]
+    metadata.grouping = release.album.styles
 
     # adding two as there is no standard. discogstagger pre v1
     # used (TXXX desc="Catalog #")
@@ -161,7 +164,7 @@ for track in release.tag_map:
     metadata.catalognumber = release.album.catno
 
     # use the correct genre field, on config use the first style
-    genre = release.album.genre
+    genre = release.album.genres
     if use_style:
         genre = release.album.styles[0]
 

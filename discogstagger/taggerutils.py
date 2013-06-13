@@ -46,7 +46,7 @@ class TaggerUtils(object):
     # supported file types.
     FILE_TYPE = (".mp3", ".flac",)
 
-    def __init__(self, sourcedir, destdir, use_lower, ogsrelid):
+    def __init__(self, sourcedir, destdir, use_lower, ogsrelid, split_artists, split_genres_and_styles):
         self.group_name = "jW"
         self.dir_format = "%ALBARTIST%-%ALBTITLE%-(%CATNO%)-%YEAR%-%GROUP%"
         self.m3u_format = "00-%ALBARTIST%-%ALBTITLE%.m3u"
@@ -58,7 +58,7 @@ class TaggerUtils(object):
         self.sourcedir = sourcedir
         self.destdir = destdir
         self.files_to_tag = self._get_target_list()
-        self.album = DiscogsAlbum(ogsrelid)
+        self.album = DiscogsAlbum(ogsrelid, split_artists, split_genres_and_styles)
         self.use_lower = use_lower
 
         if len(self.files_to_tag) == len(self.album.tracks):

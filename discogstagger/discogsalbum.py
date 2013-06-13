@@ -30,10 +30,14 @@ class DiscogsAlbum(object):
         [ 04 ] Blunted Dummies - House For All (J. Acquaviva's Mix)
         [ 05 ] Blunted Dummies - House For All (Ruby Fruit Jungle Mix) """
 
-    def __init__(self, releaseid):
+    def __init__(self, releaseid, split_artists, split_genres_and_styles):
 
+        self.split_artists = split_artists.strip('"')
+        self.split_genres_and_styles = split_genres_and_styles.strip('"')
         discogs.user_agent = "discogstagger +http://github.com/jesseward"
         self.release = discogs.Release(releaseid)
+        # need some common properties for multi disc handling
+        self.discs = {}
         logging.info("Fetching %s - %s (%s)" % (self.artist, self.title,
                     releaseid))
 
@@ -129,10 +133,24 @@ class DiscogsAlbum(object):
         return self.release.data["genres"][0]
 
     @property
-    def styles(self):
+    def genres(self):
+        """ obtain the album genre """
+
+        rel_genres = self.split_genres_and_styles.join(self.release.data["genres"])
+        return rel_genres
+
+    @property
+    def style(self):
         """ obtain the album styles """
 
-        return self.release.data["styles"]
+        return self.release.data["styles"][0]
+
+    @property
+    def styles(self):
+        """ obtain the album styles in one field """
+
+        rel_styles = self.split_genres_and_styles.join(self.release.data["styles"])
+        return rel_styles
 
     def _gen_artist(self, artist_data):
         """ yields a list of normalized release artists name properties """
@@ -151,7 +169,7 @@ class DiscogsAlbum(object):
     def artist(self):
         """ obtain the album artist """
 
-        rel_artist = " & ".join(self._gen_artist(self.release.artists))
+        rel_artist = self.split_artists.join(self._gen_artist(self.release.artists))
         return self.clean_name(rel_artist)
 
     @property
@@ -208,6 +226,9 @@ class DiscogsAlbum(object):
                 pos = self.disc_and_track_no(t["position"])
                 track.tracknumber = pos["tracknumber"]
                 track.discnumber = pos["discnumber"]
+                # assign discnumber and tracknumber to discs dict to use this
+                # for later usage on multi disc handling
+                self.discs[pos("discnumber")] = pos["tracknumber"]
             else:
                 logging.debug("album just contains one disc")
                 track.discnumber = 1
