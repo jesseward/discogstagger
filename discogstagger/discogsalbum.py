@@ -181,8 +181,10 @@ class DiscogsAlbum(object):
     @property
     def note(self):
         """ obtain the note """
-
-        return self.release.data["notes"]
+        value = False
+        if "notes" in self.release.data:
+            value = self.release.data["notes"]
+        return value
 
     def disc_and_track_no(self, position):
         """ obtain the disc and tracknumber from given position """
@@ -228,7 +230,7 @@ class DiscogsAlbum(object):
                 track.discnumber = pos["discnumber"]
                 # assign discnumber and tracknumber to discs dict to use this
                 # for later usage on multi disc handling
-                self.discs[pos("discnumber")] = pos["tracknumber"]
+                self.discs[pos["discnumber"]] = pos["tracknumber"]
             else:
                 logging.debug("album just contains one disc")
                 track.discnumber = 1

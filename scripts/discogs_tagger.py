@@ -56,6 +56,8 @@ logging.info("Using destination directory: %s", destdir)
 
 id_file = config.get("batch", "id_file")
 id_tag = config.get("batch", "id_tag")
+dir_format_batch = "dir"
+dir_format = None
 
 if not options.releaseid:
     if not os.path.exists(os.path.join(options.sdir, id_file)):
@@ -68,6 +70,9 @@ if not options.releaseid:
                 myids[name.strip()] =  var
         if id_tag in myids:
             releaseid = myids[id_tag].strip()
+        if dir_format_batch in myids:
+            dir_format = myids[dir_format_batch].strip()
+            print "Dir_format: " + dir_format
 else:
     releaseid = options.releaseid
 
@@ -88,6 +93,8 @@ release = TaggerUtils(options.sdir, destdir, use_lower_filenames, releaseid,
 release.nfo_format = config.get("file-formatting", "nfo")
 release.m3u_format = config.get("file-formatting", "m3u")
 release.dir_format = config.get("file-formatting", "dir")
+if dir_format:
+    release.dir_format = dir_format
 release.song_format = config.get("file-formatting", "song")
 images_format = config.get("file-formatting", "images")
 release.group_name = config.get("details", "group")

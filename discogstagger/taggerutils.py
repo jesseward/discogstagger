@@ -61,6 +61,9 @@ class TaggerUtils(object):
         self.album = DiscogsAlbum(ogsrelid, split_artists, split_genres_and_styles)
         self.use_lower = use_lower
 
+        print "files: " + str(len(self.files_to_tag))
+        print "tags: " + str(len(self.album.tracks))
+
         if len(self.files_to_tag) == len(self.album.tracks):
             self.tag_map = self._get_tag_map()
         else:
@@ -99,6 +102,22 @@ class TaggerUtils(object):
         try:
             dir_list = os.listdir(self.sourcedir)
             dir_list.sort()
+
+            target_list = [os.path.join(self.sourcedir, x) for x in dir_list if x.lower().endswith(TaggerUtils.FILE_TYPE)]
+
+            if not target_list:
+                print "target_list empty..."
+                tmp_list = []
+                for y in dir_list:
+                    print "determine y: " + y
+                    sub_dir = os.path.join(self.sourcedir, y)
+                    if os.path.isdir(sub_dir):
+                        tmp_list.extend(os.listdir(sub_dir))
+                    tmp_list = [os.path.join(sub_dir, y) for y in tmp_list]
+                tmp_list.sort()
+
+                target_list = [z for z in tmp_list if z.lower().endswith(TaggerUtils.FILE_TYPE)]
+
         except OSError, e:
             if e.errno == errno.EEXIST:
                 logging.error("No such directory '%s'", self.sourcedir)
@@ -107,7 +126,7 @@ class TaggerUtils(object):
                 raise IOError("General IO system error '%s'" % errno[e])
 
         # strip unwanted files
-        return [x for x in dir_list if x.lower().endswith(TaggerUtils.FILE_TYPE)]
+        return target_list
 
     def _get_tag_map(self):
         """ matches the old with new via TargetTagMap object. """
