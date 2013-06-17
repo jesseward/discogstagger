@@ -52,6 +52,7 @@ class TaggerUtils(object):
         self.m3u_format = "00-%ALBARTIST%-%ALBTITLE%.m3u"
         self.nfo_format = "00-%ALBARTIST%-%ALBTITLE%.nfo"
         self.song_format = "%TRACKNO%-%ARTIST%-%TITLE%%TYPE%"
+        self.va_song_format = "%TRACKNO%-%ARTIST%-%TITLE%%TYPE%"
         self.images_format = "00-image"
         self.first_image_name = "folder.jpg"
 
@@ -80,7 +81,9 @@ class TaggerUtils(object):
             "%GENRE%": self.album.genre,
             "%STYLE%": self.album.styles[0],
             "%GROUP%": self.group_name,
+# could go wrong on multi discs (because of empty tracks with subdisc names)
             "%ARTIST%": self.album.tracks[trackno-1].artist,
+# see artist
             "%TITLE%": self.album.tracks[trackno-1].title,
             "%TRACKNO%": "%.2d" % trackno,
             "%TYPE%": filetype,
@@ -143,8 +146,13 @@ class TaggerUtils(object):
             track = self.album.tracks[position]
             track.orig_file = filename
             fileext = os.path.splitext(filename)[1]
-            newfile = self._value_from_tag(self.song_format,
-                                           track.position, fileext)
+            if self.album.artist == "Various":
+                newfile = self._value_from_tag(self.va_song_format,
+                                           track.tracknumber, fileext)
+            else:
+                newfile = self._value_from_tag(self.song_format,
+                                           track.tracknumber, fileext)
+
             track.new_file = get_clean_filename(newfile)
             tag_map.append(track)
 
@@ -171,6 +179,18 @@ class TaggerUtils(object):
         dir_name = os.path.join(path_name, dest_dir)
 
         return dir_name
+
+    @property
+    def album_folder_name(self):
+        """ returns the album as the name for the sub-dir for multi disc 
+            releases"""
+
+        folder_name = "%s%s" % (get_clean_filename(str(self.album.title)), self.disc_folder_name)
+
+        if self.use_lower:
+            folder_name = folder_name.lower()
+
+        return folder_name
 
     @property
     def m3u_filename(self):

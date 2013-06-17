@@ -188,7 +188,11 @@ class DiscogsAlbum(object):
 
     def disc_and_track_no(self, position):
         """ obtain the disc and tracknumber from given position """
-        idx = position.index("-")
+        idx = position.find("-")
+        if idx == -1:
+            idx = position.find(".")
+        if idx == -1:
+            idx = 0
         tracknumber = position[idx + 1:]
         discnumber = position[:idx]
 
@@ -224,15 +228,17 @@ class DiscogsAlbum(object):
             track.position = i + 1
 
             if self.disctotal > 1:
-                logging.debug("album is a multi disc release")
+#                logging.debug("album is a multi disc release")
                 pos = self.disc_and_track_no(t["position"])
-                track.tracknumber = pos["tracknumber"]
-                track.discnumber = pos["discnumber"]
+                track.tracknumber = int(pos["tracknumber"])
+                track.discnumber = int(pos["discnumber"])
                 # assign discnumber and tracknumber to discs dict to use this
                 # for later usage on multi disc handling
                 self.discs[pos["discnumber"]] = pos["tracknumber"]
             else:
                 logging.debug("album just contains one disc")
+# fetch this from the track from discogs directly
+                track.tracknumber = i + 1
                 track.discnumber = 1
 
             track.sortartist = sort_artist

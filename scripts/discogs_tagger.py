@@ -6,6 +6,7 @@ import shutil
 import logging
 import sys
 import imghdr
+import glob
 import ConfigParser
 from optparse import OptionParser
 from discogstagger.ext.mediafile import MediaFile
@@ -85,6 +86,7 @@ use_style = config.getboolean("details", "use_style")
 use_lower_filenames = config.getboolean("details", "use_lower_filenames")
 keep_tags = config.get("details", "keep_tags")
 use_folder_jpg = config.getboolean("details", "use_folder_jpg")
+split_discs = config.getboolean("details", "split_discs")
 split_artists = config.get("details", "split_artists")
 split_genres_and_styles = config.get("details", "split_genres_and_styles")
 
@@ -96,7 +98,9 @@ release.dir_format = config.get("file-formatting", "dir")
 if dir_format:
     release.dir_format = dir_format
 release.song_format = config.get("file-formatting", "song")
+release.va_song_format = config.get("file-formatting", "va_song")
 images_format = config.get("file-formatting", "images")
+release.disc_folder_name = config.get("file-formatting", "discs")
 release.group_name = config.get("details", "group")
 
 first_image_name = "folder.jpg"
@@ -122,26 +126,43 @@ if os.path.exists(dest_dir_name):
     logging.error("Destination already exists %s" % dest_dir_name)
     sys.exit("%s directory already exists, aborting." % dest_dir_name)
 else:
-    logging.info("Creating destination directory '%s'" %
-                 dest_dir_name)
+    logging.info("Creating destination directory '%s'" % dest_dir_name)
     mkdir_p(dest_dir_name)
 
 logging.info("Downloading and storing images")
 get_images(release.album.images, dest_dir_name, images_format, first_image_name)
 
+disc_names = dict()
+if release.album.disctotal > 1 and split_discs:
+    logging.debug("Creating disc structure")
+    for i in range(1, release.album.disctotal + 1):
+        folder_name = "%s%.d" % (release.album_folder_name, i)
+        disc_dir_name = os.path.join(dest_dir_name, folder_name)
+        mkdir_p(disc_dir_name)
+        disc_names[i] = disc_dir_name
+        # copy only if necessary (on request) - otherwise attach original
+        for filename in glob.glob(os.path.join(dest_dir_name, '*.jpg')):
+            shutil.copy(filename, disc_dir_name)
+    # delete only on request
+    for filename in glob.glob(os.path.join(dest_dir_name, '*.jpg')):
+        os.remove(os.path.join(dest_dir_name, filename))
+
 for track in release.tag_map:
-    logging.info("Writing file %s" % os.path.join(dest_dir_name,
-                track.new_file))
-    logging.debug("metadata -> %.2d %s - %s" % (track.position, track.artist,
+    # copy old file into new location
+    if release.album.disctotal > 1 and split_discs:
+        target_folder = disc_names[int(track.discnumber)]
+    else:
+        target_folder = dest_dir_name
+
+    logging.info("Writing file %s" % os.path.join(target_folder, track.new_file))
+    logging.debug("metadata -> %.2d %s - %s" % (track.tracknumber, track.artist,
                  track.title))
 
-    # copy old file into new location
     shutil.copyfile(os.path.join(options.sdir, track.orig_file),
-                    os.path.join(dest_dir_name, track.new_file))
+                    os.path.join(target_folder, track.new_file))
 
     # load metadata information
-    metadata = MediaFile(os.path.join(
-                         dest_dir_name, track.new_file))
+    metadata = MediaFile(os.path.join(target_folder, track.new_file))
 
     # read already existing (and still wanted) properties
     keepTags = {}
@@ -218,9 +239,11 @@ for track in release.tag_map:
 #
 # start supplementary actions
 #
+# adopt for multi disc support (copy to disc folder, add disc number, ...)
 logging.info("Generating .nfo file")
 create_nfo(release.album.album_info, dest_dir_name, release.nfo_filename)
 
+# adopt for multi disc support
 logging.info("Generating .m3u file")
 create_m3u(release.tag_map, dest_dir_name, release.m3u_filename)
 
