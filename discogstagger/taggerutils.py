@@ -41,6 +41,7 @@ class TaggerUtils(object):
         "ä": "ae",
         "Ü": "Ue",
         "ü": "ue",
+#        ".": "_",
     }
 
     # supported file types.
@@ -62,15 +63,12 @@ class TaggerUtils(object):
         self.album = DiscogsAlbum(ogsrelid, split_artists, split_genres_and_styles)
         self.use_lower = use_lower
 
-        print "files: " + str(len(self.files_to_tag))
-        print "tags: " + str(len(self.album.tracks))
-
         if len(self.files_to_tag) == len(self.album.tracks):
             self.tag_map = self._get_tag_map()
         else:
             self.tag_map = False
 
-    def _value_from_tag(self, fileformat, trackno=1, filetype=".mp3"):
+    def _value_from_tag(self, fileformat, trackno=1, position=1, filetype=".mp3"):
         """ Generates the filename tagging map """
 
         property_map = {
@@ -82,9 +80,9 @@ class TaggerUtils(object):
             "%STYLE%": self.album.styles[0],
             "%GROUP%": self.group_name,
 # could go wrong on multi discs (because of empty tracks with subdisc names)
-            "%ARTIST%": self.album.tracks[trackno-1].artist,
+            "%ARTIST%": self.album.tracks[position].artist,
 # see artist
-            "%TITLE%": self.album.tracks[trackno-1].title,
+            "%TITLE%": self.album.tracks[position].title,
             "%TRACKNO%": "%.2d" % trackno,
             "%TYPE%": filetype,
             "%LABEL%": self.album.label,
@@ -106,29 +104,30 @@ class TaggerUtils(object):
             dir_list = os.listdir(self.sourcedir)
             dir_list.sort()
 
+            # strip unwanted files
             target_list = [os.path.join(self.sourcedir, x) for x in dir_list if x.lower().endswith(TaggerUtils.FILE_TYPE)]
 
             if not target_list:
-                print "target_list empty..."
+                logger.debug("target_list empty, try to retrieve subfolders")
                 tmp_list = []
                 for y in dir_list:
-                    print "determine y: " + y
+                    logger.debug("subfolder: %s" % y)
                     sub_dir = os.path.join(self.sourcedir, y)
                     if os.path.isdir(sub_dir):
                         tmp_list.extend(os.listdir(sub_dir))
                     tmp_list = [os.path.join(sub_dir, y) for y in tmp_list]
                 tmp_list.sort()
 
+                # strip unwanted files
                 target_list = [z for z in tmp_list if z.lower().endswith(TaggerUtils.FILE_TYPE)]
 
         except OSError, e:
             if e.errno == errno.EEXIST:
-                logging.error("No such directory '%s'", self.sourcedir)
+                logger.error("No such directory '%s'", self.sourcedir)
                 raise IOError("No such directory '%s'", self.sourcedir)
             else:
                 raise IOError("General IO system error '%s'" % errno[e])
 
-        # strip unwanted files
         return target_list
 
     def _get_tag_map(self):
@@ -138,6 +137,7 @@ class TaggerUtils(object):
 
         # ignore files that do not match FILE_TYPE
         for position, filename in enumerate(self.files_to_tag):
+            logger.debug("track position: %d" % position)
             # add the found files to the tag_map list
             logger.debug("mapping file %s --to--> %s - %s" % (filename,
                          self.album.tracks[position].artist,
@@ -146,12 +146,14 @@ class TaggerUtils(object):
             track = self.album.tracks[position]
             track.orig_file = filename
             fileext = os.path.splitext(filename)[1]
+
+            # special handling for Various Artists discs
             if self.album.artist == "Various":
                 newfile = self._value_from_tag(self.va_song_format,
-                                           track.tracknumber, fileext)
+                                           track.tracknumber, position, fileext)
             else:
                 newfile = self._value_from_tag(self.song_format,
-                                           track.tracknumber, fileext)
+                                           track.tracknumber, position, fileext)
 
             track.new_file = get_clean_filename(newfile)
             tag_map.append(track)
@@ -210,15 +212,21 @@ class TaggerUtils(object):
 def get_clean_filename(f):
     """ Removes unwanted characters from file names """
 
-    a = unicode(f, "utf-8")
+    filename, fileext = os.path.splitext(f)
+
+    a = unicode(filename, "utf-8")
 
     for k, v in TaggerUtils.CHAR_EXCEPTIONS.iteritems():
         a = a.replace(k, v)
 
+    a = a.replace("__", "_")
+    a = a.replace("_-_", "-")
+
     a = normalize("NFKD", a).encode("ascii", "ignore")
 
     cf = re.compile(r"[^-\w.\(\)_]")
-    return cf.sub("", str(a))
+    cf = cf.sub("", str(a))
+    return "%s%s" % (cf, fileext)
 
 
 def write_file(filecontents, filename):
@@ -227,13 +235,13 @@ def write_file(filecontents, filename):
     if not os.path.exists(os.path.dirname(filename)):
         os.makedirs(os.path.dirname(filename))
 
-    logging.debug("Writing file '%s' to disk" % filename)
+    logger.debug("Writing file '%s' to disk" % filename)
 
     try:
         with open(filename, "w") as fh:
             fh.write(filecontents)
     except IOError:
-        logging.error("Unable to write file '%s'" % filename)
+        logger.error("Unable to write file '%s'" % filename)
 
     return True
 
@@ -271,7 +279,7 @@ def get_images(images, dest_dir_name, images_format, first_image_name):
 
     if images:
         for i, image in enumerate(images, 0):
-            logging.debug("Downloading image '%s'" % image)
+            logger.debug("Downloading image '%s'" % image)
             try:
                 url_fh = TagOpener()
 
@@ -283,6 +291,6 @@ def get_images(images, dest_dir_name, images_format, first_image_name):
 
                 url_fh.retrieve(image, os.path.join(dest_dir_name, picture_name))
             except Exception as e:
-                logging.error("Unable to download image '%s', skipping."
+                logger.error("Unable to download image '%s', skipping."
                               % image)
                 print e

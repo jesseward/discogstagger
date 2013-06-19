@@ -46,14 +46,16 @@ config = ConfigParser.ConfigParser()
 config.read(options.conffile)
 
 logging.basicConfig(level=config.getint("logging", "level"))
+logger = logging.getLogger(__name__)
+
 
 if not options.destdir:
     destdir = options.sdir
 else:
     destdir = options.destdir
-    logging.info("destdir set to %s", options.destdir)
+    logger.info("destdir set to %s", options.destdir)
 
-logging.info("Using destination directory: %s", destdir)
+logger.info("Using destination directory: %s", destdir)
 
 id_file = config.get("batch", "id_file")
 id_tag = config.get("batch", "id_tag")
@@ -86,9 +88,13 @@ use_style = config.getboolean("details", "use_style")
 use_lower_filenames = config.getboolean("details", "use_lower_filenames")
 keep_tags = config.get("details", "keep_tags")
 use_folder_jpg = config.getboolean("details", "use_folder_jpg")
+split_discs_folder = config.getboolean("details", "split_discs_folder")
 split_discs = config.getboolean("details", "split_discs")
-split_artists = config.get("details", "split_artists")
-split_genres_and_styles = config.get("details", "split_genres_and_styles")
+if split_discs:
+    split_discs_extension = config.get("details", "split_discs_extension").strip('"')
+
+split_artists = config.get("details", "split_artists").strip('"')
+split_genres_and_styles = config.get("details", "split_genres_and_styles").strip('"')
 
 release = TaggerUtils(options.sdir, destdir, use_lower_filenames, releaseid, 
     split_artists, split_genres_and_styles)
@@ -110,31 +116,31 @@ if not use_folder_jpg:
 
 # ensure we were able to map the release appropriately.
 if not release.tag_map:
-    logging.error("Unable to match file list to discogs release '%s'" %
+    logger.error("Unable to match file list to discogs release '%s'" %
                   releaseid)
     sys.exit()
 
 #
 # start tagging actions.
 #
-logging.info("Tagging album '%s - %s'" % (release.album.artist,
+logger.info("Tagging album '%s - %s'" % (release.album.artist,
              release.album.title))
 
 dest_dir_name = release.dest_dir_name
 
 if os.path.exists(dest_dir_name):
-    logging.error("Destination already exists %s" % dest_dir_name)
+    logger.error("Destination already exists %s" % dest_dir_name)
     sys.exit("%s directory already exists, aborting." % dest_dir_name)
 else:
-    logging.info("Creating destination directory '%s'" % dest_dir_name)
+    logger.info("Creating destination directory '%s'" % dest_dir_name)
     mkdir_p(dest_dir_name)
 
-logging.info("Downloading and storing images")
+logger.info("Downloading and storing images")
 get_images(release.album.images, dest_dir_name, images_format, first_image_name)
 
 disc_names = dict()
-if release.album.disctotal > 1 and split_discs:
-    logging.debug("Creating disc structure")
+if release.album.disctotal > 1 and split_discs_folder:
+    logger.debug("Creating disc structure")
     for i in range(1, release.album.disctotal + 1):
         folder_name = "%s%.d" % (release.album_folder_name, i)
         disc_dir_name = os.path.join(dest_dir_name, folder_name)
@@ -149,14 +155,15 @@ if release.album.disctotal > 1 and split_discs:
 
 for track in release.tag_map:
     # copy old file into new location
-    if release.album.disctotal > 1 and split_discs:
+    if release.album.disctotal > 1 and split_discs_folder:
         target_folder = disc_names[int(track.discnumber)]
     else:
         target_folder = dest_dir_name
 
-    logging.info("Writing file %s" % os.path.join(target_folder, track.new_file))
-    logging.debug("metadata -> %.2d %s - %s" % (track.tracknumber, track.artist,
+    logger.info("Writing file %s" % os.path.join(target_folder, track.new_file))
+    logger.debug("metadata -> %.2d %s - %s" % (track.tracknumber, track.artist,
                  track.title))
+    logger.debug("----------> %s" % track.new_file)
 
     shutil.copyfile(os.path.join(options.sdir, track.orig_file),
                     os.path.join(target_folder, track.new_file))
@@ -175,6 +182,10 @@ for track in release.tag_map:
 
     # set album metadata
     metadata.album = release.album.title
+    if split_discs_folder:
+        metadata.album = "%s%s%d" % (release.album.title, split_discs_extension,
+            track.discnumber)
+
     metadata.composer = release.album.artist
     metadata.albumartist = release.album.artist
     metadata.albumartist_sort = release.album.sort_artist
@@ -200,7 +211,7 @@ for track in release.tag_map:
     metadata.discogs_id = releaseid
 
     if release.album.disctotal and release.album.disctotal > 1 and track.discnumber:
-        logging.info("writing disctotal and discnumber")
+        logger.info("writing disctotal and discnumber")
         metadata.disc = track.discnumber
         metadata.disctotal = release.album.disctotal
 
@@ -213,7 +224,7 @@ for track in release.tag_map:
     metadata.title = track.title
     metadata.artist = track.artist
     metadata.artist_sort = track.sortartist
-    metadata.track = track.position
+    metadata.track = track.tracknumber
 
     # the following value will be wrong, if the disc has a name
     metadata.tracktotal = len(release.tag_map)
@@ -227,7 +238,7 @@ for track in release.tag_map:
         imgtype = imghdr.what(None, imgdata)
 
         if imgtype in ("jpeg", "png"):
-            logging.info("Embedding album art.")
+            logger.info("Embedding album art.")
             metadata.art = imgdata
 
     if not keepTags is None:
@@ -240,16 +251,16 @@ for track in release.tag_map:
 # start supplementary actions
 #
 # adopt for multi disc support (copy to disc folder, add disc number, ...)
-logging.info("Generating .nfo file")
+logger.info("Generating .nfo file")
 create_nfo(release.album.album_info, dest_dir_name, release.nfo_filename)
 
 # adopt for multi disc support
-logging.info("Generating .m3u file")
+logger.info("Generating .m3u file")
 create_m3u(release.tag_map, dest_dir_name, release.m3u_filename)
 
 # remove source directory, if configured as such.
 if not keep_original:
-    logging.info("Deleting source directory '%s'" % options.sdir)
+    logger.info("Deleting source directory '%s'" % options.sdir)
     shutil.rmtree(options.sdir)
 
-logging.info("Tagging complete.")
+logger.info("Tagging complete.")

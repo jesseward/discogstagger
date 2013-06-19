@@ -3,6 +3,8 @@ import re
 
 import discogs_client as discogs
 
+logger = logging.getLogger(__name__)
+
 class TrackContainer(object):
     """ Class used to describe a tracklisting, typical properties are
         artist, title, position, orig_file, new_file """
@@ -32,13 +34,15 @@ class DiscogsAlbum(object):
 
     def __init__(self, releaseid, split_artists, split_genres_and_styles):
 
-        self.split_artists = split_artists.strip('"')
-        self.split_genres_and_styles = split_genres_and_styles.strip('"')
         discogs.user_agent = "discogstagger +http://github.com/jesseward"
         self.release = discogs.Release(releaseid)
+
         # need some common properties for multi disc handling
+        self.split_artists = split_artists
+        self.split_genres_and_styles = split_genres_and_styles
+
         self.discs = {}
-        logging.info("Fetching %s - %s (%s)" % (self.artist, self.title,
+        logger.info("Fetching %s - %s (%s)" % (self.artist, self.title,
                     releaseid))
 
     def __str__(self):
@@ -50,7 +54,7 @@ class DiscogsAlbum(object):
         """ Dumps the release data to a formatted text string. Formatted for
             .nfo file  """
 
-        logging.debug("Writing nfo file")
+        logger.debug("Writing nfo file")
         div = "_ _______________________________________________ _ _\n"
         r = div
         r += "  Name : %s - %s\n" % (self.artist, self.title)
@@ -228,7 +232,7 @@ class DiscogsAlbum(object):
             track.position = i + 1
 
             if self.disctotal > 1:
-#                logging.debug("album is a multi disc release")
+#                logger.debug("album is a multi disc release")
                 pos = self.disc_and_track_no(t["position"])
                 track.tracknumber = int(pos["tracknumber"])
                 track.discnumber = int(pos["discnumber"])
@@ -236,7 +240,7 @@ class DiscogsAlbum(object):
                 # for later usage on multi disc handling
                 self.discs[pos["discnumber"]] = pos["tracknumber"]
             else:
-                logging.debug("album just contains one disc")
+                logger.debug("album just contains one disc")
 # fetch this from the track from discogs directly
                 track.tracknumber = i + 1
                 track.discnumber = 1
