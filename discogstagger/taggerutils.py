@@ -41,7 +41,8 @@ class TaggerUtils(object):
         "ä": "ae",
         "Ü": "Ue",
         "ü": "ue",
-#        ".": "_",
+        ".": "_",
+        "+": "_and_",
     }
 
     # supported file types.
@@ -219,10 +220,10 @@ def get_clean_filename(f):
     for k, v in TaggerUtils.CHAR_EXCEPTIONS.iteritems():
         a = a.replace(k, v)
 
+    a = normalize("NFKD", a).encode("ascii", "ignore")
+
     a = a.replace("__", "_")
     a = a.replace("_-_", "-")
-
-    a = normalize("NFKD", a).encode("ascii", "ignore")
 
     cf = re.compile(r"[^-\w.\(\)_]")
     cf = cf.sub("", str(a))
@@ -252,7 +253,7 @@ def create_nfo(nfo, dest_dir, nfo_file):
     return write_file(nfo, os.path.join(dest_dir, nfo_file))
 
 
-def create_m3u(tag_map, dest_dir_name, m3u_filename):
+def create_m3u(tag_map, folder_names, dest_dir_name, m3u_filename):
     """ Generates the playlist for the given albm.
         Adhering to the following m3u format.
 
@@ -269,7 +270,7 @@ def create_m3u(tag_map, dest_dir_name, m3u_filename):
     m3u = "#EXTM3U\n"
     for track in tag_map:
         m3u += "#EXTINF:-1,%s - %s\n" % (track.artist, track.title)
-        m3u += "%s\n" % track.new_file
+        m3u += "%s/%s\n" % (folder_names[track.discnumber], track.new_file)
 
     return write_file(m3u, os.path.join(dest_dir_name, m3u_filename))
 

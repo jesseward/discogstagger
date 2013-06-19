@@ -139,19 +139,22 @@ logger.info("Downloading and storing images")
 get_images(release.album.images, dest_dir_name, images_format, first_image_name)
 
 disc_names = dict()
+folder_names = dict()
 if release.album.disctotal > 1 and split_discs_folder:
     logger.debug("Creating disc structure")
     for i in range(1, release.album.disctotal + 1):
         folder_name = "%s%.d" % (release.album_folder_name, i)
         disc_dir_name = os.path.join(dest_dir_name, folder_name)
         mkdir_p(disc_dir_name)
+#This is duplicate, remove one of the following statements
         disc_names[i] = disc_dir_name
-        # copy only if necessary (on request) - otherwise attach original
-        for filename in glob.glob(os.path.join(dest_dir_name, '*.jpg')):
-            shutil.copy(filename, disc_dir_name)
-    # delete only on request
-    for filename in glob.glob(os.path.join(dest_dir_name, '*.jpg')):
-        os.remove(os.path.join(dest_dir_name, filename))
+        folder_names[i] = folder_name
+#        # copy only if necessary (on request) - otherwise attach original
+#        for filename in glob.glob(os.path.join(dest_dir_name, '*.jpg')):
+#            shutil.copy(filename, disc_dir_name)
+#    # delete only on request
+#    for filename in glob.glob(os.path.join(dest_dir_name, '*.jpg')):
+#        os.remove(os.path.join(dest_dir_name, filename))
 
 for track in release.tag_map:
     # copy old file into new location
@@ -230,7 +233,8 @@ for track in release.tag_map:
     metadata.tracktotal = len(release.tag_map)
 
     first_image_name = release.first_image_name
-
+# this should be done in a cleaner way to avoid multiple images in different
+# folders (use the dest_dir again....)
     if embed_coverart and os.path.exists(os.path.join(dest_dir_name,
                                          first_image_name)):
         imgdata = open(os.path.join(dest_dir_name,
@@ -256,7 +260,7 @@ create_nfo(release.album.album_info, dest_dir_name, release.nfo_filename)
 
 # adopt for multi disc support
 logger.info("Generating .m3u file")
-create_m3u(release.tag_map, dest_dir_name, release.m3u_filename)
+create_m3u(release.tag_map, folder_names, dest_dir_name, release.m3u_filename)
 
 # remove source directory, if configured as such.
 if not keep_original:
