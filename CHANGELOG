@@ -8,9 +8,9 @@ Version 1.2.0
                creation (e.g. %ARTIST%/%ALBUM%)
 * feature: add possibility to name the first image folder.jpg, so that clients 
            recognize this picture, even though it is not embedded (Issue #12)
-* feature: add multi disc support (Issue #14), this does right now just covers
-           the handling of tags (discnumber, discstotal) and does not take 
-           care about the filehandling
+* feature: add multi disc support (Issue #14), this does right now covers
+           the handling of tags (discnumber, discstotal) and splitting folders
+           for multiple discs based on a configuration parameter
 
 Version 1.1.0
 

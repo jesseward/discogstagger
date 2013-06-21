@@ -26,6 +26,27 @@ def mkdir_p(path):
             pass
         else: raise
 
+def release_config(dirname, filename):
+    my_tags = {}
+    if os.path.exists(os.path.join(dirname, filename)):
+        with open(os.path.join(dirname, filename)) as tagFile:
+            for line in tagFile:
+                name, var = line.partition("=")[::2]
+                my_tags[name.strip()] =  var
+    return my_tags
+
+def config_value(section, name, config, rel_tags):
+    val = config.get(section, name)
+    if name in rel_tags:
+        val = rel_tags[name]
+    return val
+
+def config_boolean_value(section, name, config, rel_tags):
+    val = config.getboolean(section, name)
+    if name in rel_tags:
+        val = rel_tags[name]
+    return val
+
 p = OptionParser()
 p.add_option("-r", "--releaseid", action="store", dest="releaseid",
              help="The discogs.com release id of the target album")
@@ -48,7 +69,28 @@ config.read(options.conffile)
 logging.basicConfig(level=config.getint("logging", "level"))
 logger = logging.getLogger(__name__)
 
+# read necessary config options for batch processing
+id_file = config.get("batch", "id_file")
+id_tag = config.get("batch", "id_tag")
+dir_format_batch = "dir"
+dir_format = None
 
+# read tags from batch file if available
+release_tags = release_config(options.sdir, id_file)
+
+if id_tag in release_tags:
+    releaseid = release_tags[id_tag].strip()
+
+if dir_format_batch in release_tags:
+    dir_format = release_tags[dir_format_batch].strip()
+
+if options.releaseid:
+    releaseid = options.releaseid
+
+if not releaseid:
+    p.error("Please specify the discogs.com releaseid ('-r')")
+
+# read destination directory
 if not options.destdir:
     destdir = options.sdir
 else:
@@ -57,57 +99,43 @@ else:
 
 logger.info("Using destination directory: %s", destdir)
 
-id_file = config.get("batch", "id_file")
-id_tag = config.get("batch", "id_tag")
-dir_format_batch = "dir"
-dir_format = None
-
-if not options.releaseid:
-    if not os.path.exists(os.path.join(options.sdir, id_file)):
-        p.error("Please specify the discogs.com releaseid ('-r')")
-    else:
-        myids = {}
-        with open(os.path.join(options.sdir, id_file)) as idFile:
-            for line in idFile:
-                name, var = line.partition("=")[::2]
-                myids[name.strip()] =  var
-        if id_tag in myids:
-            releaseid = myids[id_tag].strip()
-        if dir_format_batch in myids:
-            dir_format = myids[dir_format_batch].strip()
-            print "Dir_format: " + dir_format
-else:
-    releaseid = options.releaseid
-
-if not releaseid:
-    p.error("Please specify the discogs.com releaseid ('-r')")
-
+# some config options, which are not "overwritable" through release-tags
 keep_original = config.getboolean("details", "keep_original")
 embed_coverart = config.getboolean("details", "embed_coverart")
-use_style = config.getboolean("details", "use_style")
 use_lower_filenames = config.getboolean("details", "use_lower_filenames")
-keep_tags = config.get("details", "keep_tags")
 use_folder_jpg = config.getboolean("details", "use_folder_jpg")
+nfo_format = config.get("file-formatting", "nfo")
+m3u_format = config.get("file-formatting", "m3u")
+
+# config options "overwritable" through release-tags
+keep_tags = config_value("details", "keep_tags", config, release_tags)
+dir_format = config_value("file-formatting", "dir", config, release_tags)
+song_format = config_value("file-formatting", "song", config, release_tags)
+va_song_format = config_value("file-formatting", "va_song", config, release_tags)
+images_format = config_value("file-formatting", "images", config, release_tags)
+disc_folder_name = config_value("file-formatting", "discs", config, release_tags)
+group_name = config_value("details", "group", config, release_tags)
+
+encoder_tag = config_value("tags", "encoder", config, release_tags)
+
+use_style = config.getboolean("details", "use_style")
 split_discs_folder = config.getboolean("details", "split_discs_folder")
 split_discs = config.getboolean("details", "split_discs")
 if split_discs:
     split_discs_extension = config.get("details", "split_discs_extension").strip('"')
-
 split_artists = config.get("details", "split_artists").strip('"')
 split_genres_and_styles = config.get("details", "split_genres_and_styles").strip('"')
 
+
 release = TaggerUtils(options.sdir, destdir, use_lower_filenames, releaseid, 
     split_artists, split_genres_and_styles)
-release.nfo_format = config.get("file-formatting", "nfo")
-release.m3u_format = config.get("file-formatting", "m3u")
-release.dir_format = config.get("file-formatting", "dir")
-if dir_format:
-    release.dir_format = dir_format
-release.song_format = config.get("file-formatting", "song")
-release.va_song_format = config.get("file-formatting", "va_song")
-images_format = config.get("file-formatting", "images")
-release.disc_folder_name = config.get("file-formatting", "discs")
-release.group_name = config.get("details", "group")
+release.nfo_format = nfo_format
+release.m3u_format = m3u_format
+release.dir_format = dir_format
+release.song_format = song_format
+release.va_song_format = va_song_format
+release.disc_folder_name = disc_folder_name
+release.group_name = group_name
 
 first_image_name = "folder.jpg"
 
@@ -123,8 +151,10 @@ if not release.tag_map:
 #
 # start tagging actions.
 #
-logger.info("Tagging album '%s - %s'" % (release.album.artist,
-             release.album.title))
+artist = split_artists.join(release.album.artists)
+artist = release.clean_name(artist)
+
+logger.info("Tagging album '%s - %s'" % (artist, release.album.title))
 
 dest_dir_name = release.dest_dir_name
 
@@ -189,8 +219,8 @@ for track in release.tag_map:
         metadata.album = "%s%s%d" % (release.album.title, split_discs_extension,
             track.discnumber)
 
-    metadata.composer = release.album.artist
-    metadata.albumartist = release.album.artist
+    metadata.composer = artist
+    metadata.albumartist = artist
     metadata.albumartist_sort = release.album.sort_artist
     metadata.label = release.album.label
     metadata.year = release.album.year
@@ -218,7 +248,7 @@ for track in release.tag_map:
         metadata.disc = track.discnumber
         metadata.disctotal = release.album.disctotal
 
-    if release.album.artist == "Various":
+    if artist == "Various":
         metadata.comp = True
 
     metadata.comments = release.album.note

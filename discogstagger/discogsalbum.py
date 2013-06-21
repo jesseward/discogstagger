@@ -6,11 +6,8 @@ import discogs_client as discogs
 logger = logging.getLogger(__name__)
 
 class TrackContainer(object):
-    """ Class used to describe a tracklisting, typical properties are
-        artist, title, position, orig_file, new_file """
 
     pass
-
 
 class DiscogsAlbum(object):
     """ Wraps the discogs-client-api script, abstracting the minimal set of
@@ -31,13 +28,12 @@ class DiscogsAlbum(object):
         [ 03 ] Blunted Dummies - House For All (Eddie Richard's Mix)
         [ 04 ] Blunted Dummies - House For All (J. Acquaviva's Mix)
         [ 05 ] Blunted Dummies - House For All (Ruby Fruit Jungle Mix) """
-
+# remove all not needed parameters (these should be not handled in here)
     def __init__(self, releaseid, split_artists, split_genres_and_styles):
 
         discogs.user_agent = "discogstagger +http://github.com/jesseward"
         self.release = discogs.Release(releaseid)
 
-        # need some common properties for multi disc handling
         self.split_artists = split_artists
         self.split_genres_and_styles = split_genres_and_styles
 
@@ -170,6 +166,11 @@ class DiscogsAlbum(object):
         return self.release.data["country"]
 
     @property
+    def artists(self):
+        """ obtain the album artists """
+        return self._gen_artist(self.release.artists)
+
+    @property
     def artist(self):
         """ obtain the album artist """
 
@@ -213,6 +214,8 @@ class DiscogsAlbum(object):
         track_list = []
         for i, t in enumerate((x for x in self.release.tracklist
                               if x["type"] == "Track")):
+# there could be several artists in tracks as well....
+# need to take care of this one ;-)
             try:
                 sort_artist = t["artists"][0].name
                 artist = self.clean_name(sort_artist)
