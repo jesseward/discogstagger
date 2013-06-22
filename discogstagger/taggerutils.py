@@ -72,6 +72,8 @@ class TaggerUtils(object):
     def _value_from_tag(self, fileformat, trackno=1, position=1, filetype=".mp3"):
         """ Generates the filename tagging map """
 
+        logger.debug("parameters given %d" % trackno)
+
         property_map = {
             "%ALBTITLE%": self.album.title,
             "%ALBARTIST%": self.album.artist,

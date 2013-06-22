@@ -258,7 +258,7 @@ class DiscogsAlbum(object):
                 track.tracknumber = int(pos["tracknumber"])
                 track.discnumber = int(pos["discnumber"])
             else:
-                track.tracknumber = t["position"]
+                track.tracknumber = int(t["position"])
                 track.discnumber = 1
             self.discs[int(track.discnumber)] = int(track.tracknumber)
 
