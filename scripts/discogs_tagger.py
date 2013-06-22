@@ -179,6 +179,8 @@ if release.album.disctotal > 1 and split_discs_folder:
 #This is duplicate, remove one of the following statements
         disc_names[i] = disc_dir_name
         folder_names[i] = folder_name
+else:
+    folder_names[1] = ""
 #        # copy only if necessary (on request) - otherwise attach original
 #        for filename in glob.glob(os.path.join(dest_dir_name, '*.jpg')):
 #            shutil.copy(filename, disc_dir_name)
