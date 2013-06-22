@@ -235,7 +235,7 @@ class DiscogsAlbum(object):
 # this is pretty much the same as the artist stuff in the album,
 # try to refactor it
             try:
-                sort_artist = t["artists"][0]
+                sort_artist = self.clean_name(t["artists"][0].name)
                 artist = self.split_artists.join(self._gen_artist(t["artists"]))
                 artist = self.clean_name(artist)
             except IndexError:
