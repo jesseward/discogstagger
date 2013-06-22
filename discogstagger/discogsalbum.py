@@ -207,18 +207,37 @@ class DiscogsAlbum(object):
     def disctotal(self):
         return int(self.release.data["formats"][0]["qty"])
 
+    def tracktotal_on_disc(self, discnumber):
+        logger.info("discs: %s" % self.discs)
+        return self.discs[discnumber]
+
+    @property
+    def is_compilation(self):
+        if self.release.data["artists"][0]["name"] == "Various":
+            return True
+
+        for format in self.release.data["formats"]:
+            if "descriptions" in format:
+                for description in format["descriptions"]:
+                    if description == "compilation":
+                        return True
+
+        return False
+
     @property
     def tracks(self):
         """ provides the tracklist of the given release id """
 
         track_list = []
+        discsubtitle = None
         for i, t in enumerate((x for x in self.release.tracklist
                               if x["type"] == "Track")):
-# there could be several artists in tracks as well....
-# need to take care of this one ;-)
+# this is pretty much the same as the artist stuff in the album,
+# try to refactor it
             try:
-                sort_artist = t["artists"][0].name
-                artist = self.clean_name(sort_artist)
+                sort_artist = t["artists"][0]
+                artist = self.split_artists.join(self._gen_artist(t["artists"]))
+                artist = self.clean_name(artist)
             except IndexError:
                 artist = self.artist
                 sort_artist = self.sort_artist
@@ -229,28 +248,26 @@ class DiscogsAlbum(object):
             # on the cd in discogs, this seems to be wrong, but we would like to
             # handle it anyway
             if t["title"] and not t["position"] and not t["duration"]:
-                track.discsubtitle = t["title"]
+                discsubtitle = t["title"]
                 continue
 
             track.position = i + 1
 
             if self.disctotal > 1:
-#                logger.debug("album is a multi disc release")
                 pos = self.disc_and_track_no(t["position"])
                 track.tracknumber = int(pos["tracknumber"])
                 track.discnumber = int(pos["discnumber"])
-                # assign discnumber and tracknumber to discs dict to use this
-                # for later usage on multi disc handling
-                self.discs[pos["discnumber"]] = pos["tracknumber"]
             else:
-                logger.debug("album just contains one disc")
-# fetch this from the track from discogs directly
-                track.tracknumber = i + 1
+                track.tracknumber = t["position"]
                 track.discnumber = 1
+            self.discs[int(track.discnumber)] = int(track.tracknumber)
+
+            if discsubtitle:
+                track.discsubtitle = discsubtitle
 
             track.sortartist = sort_artist
-
             track.artist = artist
+
             track.title = t["title"]
             track_list.append(track)
 

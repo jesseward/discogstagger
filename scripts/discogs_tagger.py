@@ -116,16 +116,16 @@ images_format = config_value("file-formatting", "images", config, release_tags)
 disc_folder_name = config_value("file-formatting", "discs", config, release_tags)
 group_name = config_value("details", "group", config, release_tags)
 
+enocder_tag = None
 encoder_tag = config_value("tags", "encoder", config, release_tags)
 
-use_style = config.getboolean("details", "use_style")
-split_discs_folder = config.getboolean("details", "split_discs_folder")
-split_discs = config.getboolean("details", "split_discs")
+use_style = config_boolean_value("details", "use_style", config, release_tags)
+split_discs_folder = config_boolean_value("details", "split_discs_folder", config, release_tags)
+split_discs = config_boolean_value("details", "split_discs", config, release_tags)
 if split_discs:
-    split_discs_extension = config.get("details", "split_discs_extension").strip('"')
-split_artists = config.get("details", "split_artists").strip('"')
-split_genres_and_styles = config.get("details", "split_genres_and_styles").strip('"')
-
+    split_discs_extension = config_value("details", "split_discs_extension", config, release_tags).strip('"')
+split_artists = config_value("details", "split_artists", config, release_tags).strip('"')
+split_genres_and_styles = config.get("details", "split_genres_and_styles", config, release_tags).strip('"')
 
 release = TaggerUtils(options.sdir, destdir, use_lower_filenames, releaseid, 
     split_artists, split_genres_and_styles)
@@ -152,7 +152,7 @@ if not release.tag_map:
 # start tagging actions.
 #
 artist = split_artists.join(release.album.artists)
-artist = release.clean_name(artist)
+artist = release.album.clean_name(artist)
 
 logger.info("Tagging album '%s - %s'" % (artist, release.album.title))
 
@@ -248,10 +248,17 @@ for track in release.tag_map:
         metadata.disc = track.discnumber
         metadata.disctotal = release.album.disctotal
 
-    if artist == "Various":
+    if release.album.is_compilation:
         metadata.comp = True
 
     metadata.comments = release.album.note
+
+    # encoder
+    if encoder_tag is not None:
+        metadata.encoder = encoder_tag
+
+#    if track.discsubtotal:
+#        metadata.discsubtotal = track.discsubtotal
 
     # set track metadata
     metadata.title = track.title
@@ -259,8 +266,19 @@ for track in release.tag_map:
     metadata.artist_sort = track.sortartist
     metadata.track = track.tracknumber
 
-    # the following value will be wrong, if the disc has a name
-    metadata.tracktotal = len(release.tag_map)
+    # the following value will be wrong, if the disc has a name or is a multi
+    # disc release --> fix it
+    metadata.tracktotal = release.album.tracktotal_on_disc(track.discnumber)
+
+
+    # it does not make sense to store this in the "common" configuration, but only in the 
+    # id.txt. we use a special naming convention --> most probably we should reuse the 
+    # configuration parser for this one as well, no?
+    for name, value in release_tags.items():
+        if name.startswith("tag:"):
+            name = name.split(":")
+            name = name[1]
+            setattr(metadata, name, value)
 
     first_image_name = release.first_image_name
 # this should be done in a cleaner way to avoid multiple images in different
