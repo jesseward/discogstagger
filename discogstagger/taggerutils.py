@@ -69,10 +69,13 @@ class TaggerUtils(object):
         else:
             self.tag_map = False
 
-    def _value_from_tag(self, fileformat, trackno=1, position=1, filetype=".mp3"):
-        """ Generates the filename tagging map """
+    def _value_from_tag_format(self, format, trackno=1, position=1, filetype=".mp3"):
+        """ Fill in the used variables using the track information """
 
-        logger.debug("parameters given %d" % trackno)
+        logger.debug("parameters given: format: %s" % format)
+        logger.debug("parameters given: trackno: %d" % trackno)
+        logger.debug("parameters given: position: %d" % position)
+        logger.debug("paramerter avail: position: %d" % len(self.album.tracks))
 
         property_map = {
             "%ALBTITLE%": self.album.title,
@@ -86,19 +89,29 @@ class TaggerUtils(object):
             "%ARTIST%": self.album.tracks[position].artist,
 # see artist
             "%TITLE%": self.album.tracks[position].title,
+            "%DISCNO%": self.album.tracks[position].discnumber,
             "%TRACKNO%": "%.2d" % trackno,
             "%TYPE%": filetype,
             "%LABEL%": self.album.label,
         }
 
         for hashtag in property_map.keys():
-            fileformat = fileformat.replace(hashtag,
+            format = format.replace(hashtag,
                                             str(property_map[hashtag]))
 
-        if self.use_lower:
-            fileformat = fileformat.lower()
+        logger.debug("format output: %s" % format)
 
-        return fileformat
+        return format
+
+    def _value_from_tag(self, format, trackno=1, position=1, filetype=".mp3"):
+        """ Generates the filename tagging map """
+
+        format = self._value_from_tag_format(format, trackno, position, filetype)
+
+        if self.use_lower:
+            format = format.lower()
+
+        return format
 
     def _get_target_list(self):
         """ fetches a list of files in the self.sourcedir location. """

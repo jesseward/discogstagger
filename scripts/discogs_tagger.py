@@ -218,8 +218,11 @@ for track in release.tag_map:
     # set album metadata
     metadata.album = release.album.title
     if split_discs_folder:
-        metadata.album = "%s%s%d" % (release.album.title, split_discs_extension,
-            track.discnumber)
+        # the fileext should be stored on the album/track as well
+        fileext = os.path.splitext(track.orig_file)[1]
+        disc_title_extension = release._value_from_tag_format(split_discs_extension, 
+            track.tracknumber, track.position - 1, fileext)
+        metadata.album = "%s%s" % (metadata.album, disc_title)
 
     metadata.composer = artist
     metadata.albumartist = artist
