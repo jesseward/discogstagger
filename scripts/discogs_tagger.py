@@ -104,6 +104,7 @@ keep_original = config.getboolean("details", "keep_original")
 embed_coverart = config.getboolean("details", "embed_coverart")
 use_lower_filenames = config.getboolean("details", "use_lower_filenames")
 use_folder_jpg = config.getboolean("details", "use_folder_jpg")
+copy_other_files = config.getboolean("details", "copy_other_files")
 nfo_format = config.get("file-formatting", "nfo")
 m3u_format = config.get("file-formatting", "m3u")
 
@@ -128,7 +129,7 @@ split_artists = config_value("details", "split_artists", config, release_tags).s
 split_genres_and_styles = config.get("details", "split_genres_and_styles", config, release_tags).strip('"')
 
 release = TaggerUtils(options.sdir, destdir, use_lower_filenames, releaseid, 
-    split_artists, split_genres_and_styles)
+    split_artists, split_genres_and_styles, copy_other_files)
 release.nfo_format = nfo_format
 release.m3u_format = m3u_format
 release.dir_format = dir_format
@@ -222,7 +223,7 @@ for track in release.tag_map:
         fileext = os.path.splitext(track.orig_file)[1]
         disc_title_extension = release._value_from_tag_format(split_discs_extension, 
             track.tracknumber, track.position - 1, fileext)
-        metadata.album = "%s%s" % (metadata.album, disc_title)
+        metadata.album = "%s%s" % (metadata.album, disc_title_extension)
 
     metadata.composer = artist
     metadata.albumartist = artist
@@ -315,9 +316,18 @@ create_nfo(release.album.album_info, dest_dir_name, release.nfo_filename)
 logger.info("Generating .m3u file")
 create_m3u(release.tag_map, folder_names, dest_dir_name, release.m3u_filename)
 
+# copy "other files" on request
+#if copy_other_files and len(release.copy_files) > 0:
+#    logger.info("copying files from source directory")
+#    for filename in release.copy_files:
+#        if not filename.endswith('.m3u') and not os.path.exists(os.path.join(destdir, filename)):
+#            shutil.copyfile(os.path.join(options.sdir, filename), os.path.join(destdir, filename)
+
 # remove source directory, if configured as such.
 if not keep_original:
     logger.info("Deleting source directory '%s'" % options.sdir)
     shutil.rmtree(options.sdir)
+
+
 
 logger.info("Tagging complete.")

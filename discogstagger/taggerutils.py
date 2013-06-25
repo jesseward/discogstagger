@@ -48,7 +48,8 @@ class TaggerUtils(object):
     # supported file types.
     FILE_TYPE = (".mp3", ".flac",)
 
-    def __init__(self, sourcedir, destdir, use_lower, ogsrelid, split_artists, split_genres_and_styles):
+    def __init__(self, sourcedir, destdir, use_lower, ogsrelid, split_artists, 
+            split_genres_and_styles, copy_other_files):
         self.group_name = "jW"
         self.dir_format = "%ALBARTIST%-%ALBTITLE%-(%CATNO%)-%YEAR%-%GROUP%"
         self.m3u_format = "00-%ALBARTIST%-%ALBTITLE%.m3u"
@@ -58,9 +59,14 @@ class TaggerUtils(object):
         self.images_format = "00-image"
         self.first_image_name = "folder.jpg"
 
+        self.copy_other_files = copy_other_files
+
         self.sourcedir = sourcedir
         self.destdir = destdir
-        self.files_to_tag = self._get_target_list()
+        result = self._get_target_list()
+        self.files_to_tag = result["target_list"]
+        if self.copy_other_files:
+            self.copy_files = result["copy_files"]
         self.album = DiscogsAlbum(ogsrelid, split_artists, split_genres_and_styles)
         self.use_lower = use_lower
 
@@ -111,17 +117,24 @@ class TaggerUtils(object):
         if self.use_lower:
             format = format.lower()
 
+        format = get_clean_filename(format)
+
+        logger.debug("output: %s" % format)
+
         return format
 
     def _get_target_list(self):
         """ fetches a list of files in the self.sourcedir location. """
 
+        copy_files = None
         try:
             dir_list = os.listdir(self.sourcedir)
             dir_list.sort()
 
             # strip unwanted files
             target_list = [os.path.join(self.sourcedir, x) for x in dir_list if x.lower().endswith(TaggerUtils.FILE_TYPE)]
+            if self.copy_other_files:
+                copy_files = [os.path.join(self.sourcedir, x) for x in dir_list if not x.lower().endswith(TaggerUtils.FILE_TYPE)]
 
             if not target_list:
                 logger.debug("target_list empty, try to retrieve subfolders")
@@ -136,6 +149,8 @@ class TaggerUtils(object):
 
                 # strip unwanted files
                 target_list = [z for z in tmp_list if z.lower().endswith(TaggerUtils.FILE_TYPE)]
+                if self.copy_other_files:
+                    copy_files = [z for z in tmp_list if not z.lower().endswith(TaggerUtils.FILE_TYPE)]
 
         except OSError, e:
             if e.errno == errno.EEXIST:
@@ -144,7 +159,7 @@ class TaggerUtils(object):
             else:
                 raise IOError("General IO system error '%s'" % errno[e])
 
-        return target_list
+        return {"target_list": target_list, "copy_files": copy_files}
 
     def _get_tag_map(self):
         """ matches the old with new via TargetTagMap object. """
@@ -230,6 +245,11 @@ def get_clean_filename(f):
 
     filename, fileext = os.path.splitext(f)
 
+    if not fileext in TaggerUtils.FILE_TYPE:
+        logger.debug("fileext: %s" % fileext)
+        filename = f
+        fileext = ""
+
     a = unicode(filename, "utf-8")
 
     for k, v in TaggerUtils.CHAR_EXCEPTIONS.iteritems():
@@ -237,11 +257,13 @@ def get_clean_filename(f):
 
     a = normalize("NFKD", a).encode("ascii", "ignore")
 
-    a = a.replace("__", "_")
-    a = a.replace("_-_", "-")
-
     cf = re.compile(r"[^-\w.\(\)_]")
     cf = cf.sub("", str(a))
+
+    cf = cf.replace(" ", "_")
+    cf = cf.replace("__", "_")
+    cf = cf.replace("_-_", "-")
+
     return "%s%s" % (cf, fileext)
 
 
