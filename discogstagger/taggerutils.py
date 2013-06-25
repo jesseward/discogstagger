@@ -307,7 +307,10 @@ def create_m3u(tag_map, folder_names, dest_dir_name, m3u_filename):
     m3u = "#EXTM3U\n"
     for track in tag_map:
         m3u += "#EXTINF:-1,%s - %s\n" % (track.artist, track.title)
-        m3u += "%s/%s\n" % (folder_names[track.discnumber], track.new_file)
+        folder_name = folder_names[track.discnumber]
+        if folder_name is not "":
+            folder_name = "%s/" % folder_name
+        m3u += "%s%s\n" % (folder_name, track.new_file)
 
     return write_file(m3u, os.path.join(dest_dir_name, m3u_filename))
 
