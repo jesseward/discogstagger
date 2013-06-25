@@ -317,11 +317,21 @@ logger.info("Generating .m3u file")
 create_m3u(release.tag_map, folder_names, dest_dir_name, release.m3u_filename)
 
 # copy "other files" on request
-#if copy_other_files and len(release.copy_files) > 0:
-#    logger.info("copying files from source directory")
-#    for filename in release.copy_files:
-#        if not filename.endswith('.m3u') and not os.path.exists(os.path.join(destdir, filename)):
-#            shutil.copyfile(os.path.join(options.sdir, filename), os.path.join(destdir, filename)
+if copy_other_files and len(release.copy_files) > 0:
+    logger.info("copying files from source directory")
+    copy_files = release.copy_files
+    dir_list = os.listdir(options.sdir)
+    logger.debug("start_dir: %s" % options.sdir)
+    logger.debug("dir list: %s" % dir_list)
+    file_list = [os.path.join(options.sdir, x) for x in dir_list if not x.lower().endswith(TaggerUtils.FILE_TYPE) 
+                                        and os.path.isfile(os.path.join(options.sdir, x))]
+    copy_files.extend(file_list)
+
+    for fname in copy_files:
+        if not fname.endswith(".m3u"):
+            logger.debug("source: %s" % fname)
+            logger.debug("target: %s" % os.path.join(dest_dir_name, os.path.basename(fname)))
+            shutil.copyfile(fname, os.path.join(dest_dir_name, os.path.basename(fname)))
 
 # remove source directory, if configured as such.
 if not keep_original:
