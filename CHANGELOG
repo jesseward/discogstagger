@@ -2,15 +2,24 @@
 
 Version 1.2.0
 
-* improvement: add several new tags for each album and track
 * improvement: add several new tags (e.g. artist_sort, url) to the tracks
 * improvement: add possibility to use '/' in dir-property, to allow subdirectory
                creation (e.g. %ARTIST%/%ALBUM%)
-* feature: add possibility to name the first image folder.jpg, so that clients 
+* feature: add possibility to name the first image folder.jpg, so that clients
            recognize this picture, even though it is not embedded (Issue #12)
 * feature: add multi disc support (Issue #14), this does right now covers
            the handling of tags (discnumber, discstotal) and splitting folders
            for multiple discs based on a configuration parameter
+* feature: copy files already existing in source directory (using config option
+           copy_other_files)
+* feature: add additional tags for all tracks in configuration (see section tags
+           in discogs_tagger.conf - tagname: encoder) - right now not all tags
+           are supported, to see a list of supported tags, please see
+           discogstagger/ext/mediafile.py (Issue #11)
+* feature: add possibility to adopt config options for each release via the id.txt
+           file (Issue #17), this allows also to adopt certain tags via the
+           config-option-prefix "tag:" (e.g. tag:artist will replace the artist
+           of the current album with the given value)
 
 Version 1.1.0
 
