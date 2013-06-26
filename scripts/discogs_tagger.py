@@ -218,7 +218,8 @@ for track in release.tag_map:
 
     # set album metadata
     metadata.album = release.album.title
-    if split_discs_folder:
+
+    if split_discs_folder and release.album.disctotal > 1:
         # the fileext should be stored on the album/track as well
         fileext = os.path.splitext(track.orig_file)[1]
         disc_title_extension = release._value_from_tag_format(split_discs_extension, 
