@@ -245,7 +245,7 @@ def get_clean_filename(f):
 
     filename, fileext = os.path.splitext(f)
 
-    if not fileext in TaggerUtils.FILE_TYPE:
+    if not fileext in TaggerUtils.FILE_TYPE and not fileext in [".m3u", ".nfo"]:
         logger.debug("fileext: %s" % fileext)
         filename = f
         fileext = ""
