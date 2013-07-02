@@ -7,7 +7,7 @@ retrieved via the discogs.com API.
 
 Simply provide the script with a destination directory name, that contains an
 album consisting of either FLAC or MP3 media files and the discogs.com 
-release-id. discogstaggs calls out to the discogs.com API and updates the
+release-id. discogstagger calls out to the discogs.com API and updates the
 audio meta-data accordingly.
 
 If no release-id is given, the application checks, if a file "id.txt" exists
@@ -67,8 +67,21 @@ keep_original=True
 embed_coverart=False
 ```
 
+To specify genre in your tags, review the use_style option. With use_style
+set to True, you're instructing discogstagger to pull the "Style" field. The style field
+is typically more genre specific than the discogs "Genre" field. In the example below (40522),
+with use_style=True, the genre field is tagged as "House".
+
+```
+Use Discogs "style" elements instead of the genre as the genre Meta-Tag in files (True)
+Example http://www.discogs.com/Blunted-Dummies-House-For-All/release/40522
+Style = House
+Genre = Electronic
+use_style=True
+```
+
 To keep already existing tags, you can include these tags in the configuration as well. 
-Usually Rippsers (e.g. RubyRipper) do include the freedb_id, which could be kept using
+Usually Rippers (e.g. RubyRipper) do include the freedb_id, which could be kept using
 the following configuration. The list of all tags could be taken from the file 
 discogstagger/ext/mediafile.py.
 
@@ -77,7 +90,7 @@ discogstagger/ext/mediafile.py.
 keep_tags=freedb_id
 ```
 
-Furthermore you can use lowercase directory and filenames using the following configurtion:
+Furthermore you can use lowercase directory and filenames using the following configuration:
 
 ```
 # Use lowercase filenames
