@@ -196,12 +196,14 @@ for track in release.tag_map:
     else:
         target_folder = dest_dir_name
 
+    logger.debug("Source file %s" % os.path.join(options.sdir,
+                 track.orig_file))
     logger.info("Writing file %s" % os.path.join(target_folder, track.new_file))
     logger.debug("metadata -> %.2d %s - %s" % (track.tracknumber, track.artist,
                  track.title))
     logger.debug("----------> %s" % track.new_file)
 
-    shutil.copyfile(os.path.join(options.sdir, track.orig_file),
+    shutil.copyfile(track.orig_file,
                     os.path.join(target_folder, track.new_file))
 
     # load metadata information
@@ -245,7 +247,7 @@ for track in release.tag_map:
     # use the correct genre field, on config use the first style
     genre = release.album.genres
     if use_style:
-        genre = release.album.styles[0]
+        genre = release.album.style
 
     metadata.genre = genre
     metadata.discogs_id = releaseid

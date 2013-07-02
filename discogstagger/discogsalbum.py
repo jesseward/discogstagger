@@ -208,7 +208,7 @@ class DiscogsAlbum(object):
         return int(self.release.data["formats"][0]["qty"])
 
     def tracktotal_on_disc(self, discnumber):
-        logger.info("discs: %s" % self.discs)
+        logger.debug("discs: %s" % self.discs)
         return self.discs[discnumber]
 
     @property

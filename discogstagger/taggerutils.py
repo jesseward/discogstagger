@@ -89,7 +89,7 @@ class TaggerUtils(object):
             "%YEAR%": self.album.year,
             "%CATNO%": self.album.catno,
             "%GENRE%": self.album.genre,
-            "%STYLE%": self.album.styles[0],
+            "%STYLE%": self.album.style,
             "%GROUP%": self.group_name,
 # could go wrong on multi discs (because of empty tracks with subdisc names)
             "%ARTIST%": self.album.tracks[position].artist,
@@ -132,9 +132,11 @@ class TaggerUtils(object):
             dir_list.sort()
 
             # strip unwanted files
-            target_list = [os.path.join(self.sourcedir, x) for x in dir_list if x.lower().endswith(TaggerUtils.FILE_TYPE)]
+            target_list = [os.path.join(self.sourcedir, x) for x in dir_list
+                             if x.lower().endswith(TaggerUtils.FILE_TYPE)]
             if self.copy_other_files:
-                copy_files = [os.path.join(self.sourcedir, x) for x in dir_list if not x.lower().endswith(TaggerUtils.FILE_TYPE)]
+                copy_files = [os.path.join(self.sourcedir, x) for x in 
+                    dir_list if not x.lower().endswith(TaggerUtils.FILE_TYPE)]
 
             if not target_list:
                 logger.debug("target_list empty, try to retrieve subfolders")
@@ -148,9 +150,11 @@ class TaggerUtils(object):
                 tmp_list.sort()
 
                 # strip unwanted files
-                target_list = [z for z in tmp_list if z.lower().endswith(TaggerUtils.FILE_TYPE)]
+                target_list = [z for z in tmp_list if 
+                            z.lower().endswith(TaggerUtils.FILE_TYPE)]
                 if self.copy_other_files:
-                    copy_files = [z for z in tmp_list if not z.lower().endswith(TaggerUtils.FILE_TYPE)]
+                    copy_files = [z for z in tmp_list if not 
+                            z.lower().endswith(TaggerUtils.FILE_TYPE)]
 
         except OSError, e:
             if e.errno == errno.EEXIST:
