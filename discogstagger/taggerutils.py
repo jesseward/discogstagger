@@ -140,21 +140,21 @@ class TaggerUtils(object):
 
             if not target_list:
                 logger.debug("target_list empty, try to retrieve subfolders")
-                tmp_list = []
                 for y in dir_list:
+                    tmp_list = []
                     logger.debug("subfolder: %s" % y)
                     sub_dir = os.path.join(self.sourcedir, y)
                     if os.path.isdir(sub_dir):
                         tmp_list.extend(os.listdir(sub_dir))
-                    tmp_list = [os.path.join(sub_dir, y) for y in tmp_list]
-                tmp_list.sort()
+                        tmp_list.sort()
+                        tmp_list = [os.path.join(sub_dir, y) for y in tmp_list]
 
-                # strip unwanted files
-                target_list = [z for z in tmp_list if 
-                            z.lower().endswith(TaggerUtils.FILE_TYPE)]
-                if self.copy_other_files:
-                    copy_files = [z for z in tmp_list if not 
-                            z.lower().endswith(TaggerUtils.FILE_TYPE)]
+			# strip unwanted files
+			target_list.extend([z for z in tmp_list if 
+				    z.lower().endswith(TaggerUtils.FILE_TYPE)])
+			if self.copy_other_files:
+			    copy_files = [z for z in tmp_list if not 
+				    z.lower().endswith(TaggerUtils.FILE_TYPE)]
 
         except OSError, e:
             if e.errno == errno.EEXIST:
