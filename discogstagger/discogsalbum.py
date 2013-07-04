@@ -1,6 +1,5 @@
 import logging
 import re
-import inspect
 
 import discogs_client as discogs
 
@@ -168,9 +167,16 @@ class DiscogsAlbum(object):
 
     def _gen_artist(self, artist_data):
         """ yields a list of normalized release artists name properties """
-
+       
         for x in artist_data:
-            yield x.name
+            # bugfix to avoid the following scenario, or ensure we're yielding
+            # and artist object.
+            # AttributeError: 'unicode' object has no attribute 'name'
+            # [<Artist "A.D.N.Y*">, u'Presents', <Artist "Leiva">]
+            try:
+                yield x.name
+            except AttributeError:
+                pass
 
     @property
     def country(self):
@@ -252,7 +258,6 @@ class DiscogsAlbum(object):
     def tracks(self):
         """ provides the tracklist of the given release id """
     
-        logger.error(inspect.stack()[1])
         track_list = []
         discsubtitle = None
 
