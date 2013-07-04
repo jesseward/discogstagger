@@ -1,9 +1,23 @@
 import logging
 import re
+import inspect
 
 import discogs_client as discogs
 
 logger = logging.getLogger(__name__)
+
+class memoized_property(object):
+
+    def __init__(self, fget, doc=None):
+        self.fget = fget
+        self.__doc__ = doc or fget.__doc__
+        self.__name__ = fget.__name__
+
+    def __get__(self, obj, cls):
+        if obj is None:
+            return self
+        obj.__dict__[self.__name__] = result = self.fget(obj)
+        return result
 
 class TrackContainer(object):
 
@@ -193,15 +207,25 @@ class DiscogsAlbum(object):
 
     def disc_and_track_no(self, position):
         """ obtain the disc and tracknumber from given position """
-        idx = position.find("-")
-        if idx == -1:
-            idx = position.find(".")
-        if idx == -1:
-            idx = 0
-        tracknumber = position[idx + 1:]
-        discnumber = position[:idx]
 
-        return {'tracknumber': tracknumber, 'discnumber': discnumber}
+        # some variance in how discogs releases spanning multiple discs
+        # or formats are kept, add regexs here as failures are encountered
+        NUMBERING_SCHEMES = (
+            "^CD(?P<discnumber>\d+)-(?P<tracknumber>\d+)$", # CD01-12
+            "^(?P<discnumber>\d+)-(?P<tracknumber>\d+)$",   # 1-02
+            "^(?P<discnumber>\d+).(?P<tracknumber>\d+)$",   # 1.05
+        )
+
+        for scheme in NUMBERING_SCHEMES:
+            re_match = re.search(scheme, position)
+            
+            if re_match:
+                logging.debug("Found a disc and track number")
+                return {'tracknumber': re_match.group("tracknumber"), 
+                        'discnumber': re_match.group("discnumber")}
+        
+        logging.error("Unable to match multi-disc track/position")
+        return False
 
     @property
     def disctotal(self):
@@ -224,16 +248,19 @@ class DiscogsAlbum(object):
 
         return False
 
-    @property
+    @memoized_property
     def tracks(self):
         """ provides the tracklist of the given release id """
-
+    
+        logger.error(inspect.stack()[1])
         track_list = []
         discsubtitle = None
+
         for i, t in enumerate((x for x in self.release.tracklist
                               if x["type"] == "Track")):
-# this is pretty much the same as the artist stuff in the album,
-# try to refactor it
+
+            # this is pretty much the same as the artist 
+            # stuff in the album, try to refactor it
             try:
                 sort_artist = self.clean_name(t["artists"][0].name)
                 artist = self.split_artists.join(self._gen_artist(t["artists"]))
