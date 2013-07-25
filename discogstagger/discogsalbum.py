@@ -201,7 +201,7 @@ class DiscogsAlbum(object):
     def sort_artist(self):
         """ obtain the album artist """
 
-        return self.release.artists[0].name
+        return self.clean_name(self.release.artists[0].name)
 
     @property
     def note(self):
