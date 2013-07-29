@@ -32,24 +32,13 @@ class TaggerUtils(object):
         The class also provides a few methods that create supplimental files,
         relvant to a given album (m3u, nfo file and album art grabber.)"""
 
-    CHAR_EXCEPTIONS = {
-        "&": "and",
-        " ": "_",
-        "ö": "oe",
-        "Ö": "Oe",
-        "Ä": "Ae",
-        "ä": "ae",
-        "Ü": "Ue",
-        "ü": "ue",
-        ".": "_",
-        "+": "_and_",
-    }
 
     # supported file types.
     FILE_TYPE = (".mp3", ".flac",)
 
     def __init__(self, sourcedir, destdir, use_lower, ogsrelid, split_artists, 
-            split_genres_and_styles, copy_other_files):
+            split_genres_and_styles, copy_other_files, char_exceptions):
+
         self.group_name = "jW"
         self.dir_format = "%ALBARTIST%-%ALBTITLE%-(%CATNO%)-%YEAR%-%GROUP%"
         self.m3u_format = "00-%ALBARTIST%-%ALBTITLE%.m3u"
@@ -60,6 +49,7 @@ class TaggerUtils(object):
         self.first_image_name = "folder.jpg"
 
         self.copy_other_files = copy_other_files
+        self.char_exceptions = char_exceptions
 
         self.sourcedir = sourcedir
         self.destdir = destdir
@@ -117,7 +107,7 @@ class TaggerUtils(object):
         if self.use_lower:
             format = format.lower()
 
-        format = get_clean_filename(format)
+        format = self._get_clean_filename(format)
 
         logger.debug("output: %s" % format)
 
@@ -190,7 +180,7 @@ class TaggerUtils(object):
                 newfile = self._value_from_tag(self.song_format,
                                            track.tracknumber, position, fileext)
 
-            track.new_file = get_clean_filename(newfile)
+            track.new_file = self._get_clean_filename(newfile)
             tag_map.append(track)
 
         return tag_map
@@ -207,7 +197,7 @@ class TaggerUtils(object):
 
         dest_dir = ""
         for ddir in self.dir_format.split("/"):
-            d_dir = get_clean_filename(self._value_from_tag(ddir))
+            d_dir = self._get_clean_filename(self._value_from_tag(ddir))
             if dest_dir == "":
                 dest_dir = d_dir
             else:
@@ -222,7 +212,7 @@ class TaggerUtils(object):
         """ returns the album as the name for the sub-dir for multi disc 
             releases"""
 
-        folder_name = "%s%s" % (get_clean_filename(str(self.album.title)), self.disc_folder_name)
+        folder_name = "%s%s" % (self._get_clean_filename(str(self.album.title)), self.disc_folder_name)
 
         if self.use_lower:
             folder_name = folder_name.lower()
@@ -234,41 +224,41 @@ class TaggerUtils(object):
         """ generates the m3u file name """
 
         m3u = self._value_from_tag(self.m3u_format)
-        return get_clean_filename(m3u)
+        return self._get_clean_filename(m3u)
 
     @property
     def nfo_filename(self):
         """ generates the nfo file name """
 
         nfo = self._value_from_tag(self.nfo_format)
-        return get_clean_filename(nfo)
+        return self._get_clean_filename(nfo)
 
 
-def get_clean_filename(f):
-    """ Removes unwanted characters from file names """
+    def _get_clean_filename(self, f):
+        """ Removes unwanted characters from file names """
 
-    filename, fileext = os.path.splitext(f)
+        filename, fileext = os.path.splitext(f)
 
-    if not fileext in TaggerUtils.FILE_TYPE and not fileext in [".m3u", ".nfo"]:
-        logger.debug("fileext: %s" % fileext)
-        filename = f
-        fileext = ""
+        if not fileext in TaggerUtils.FILE_TYPE and not fileext in [".m3u", ".nfo"]:
+            logger.debug("fileext: %s" % fileext)
+            filename = f
+            fileext = ""
 
-    a = unicode(filename, "utf-8")
+        a = unicode(filename, "utf-8")
 
-    for k, v in TaggerUtils.CHAR_EXCEPTIONS.iteritems():
-        a = a.replace(k, v)
+        for k, v in self.char_exceptions.iteritems():
+            a = a.replace(k, v)
 
-    a = normalize("NFKD", a).encode("ascii", "ignore")
+        a = normalize("NFKD", a).encode("ascii", "ignore")
 
-    cf = re.compile(r"[^-\w.\(\)_]")
-    cf = cf.sub("", str(a))
+        cf = re.compile(r"[^-\w.\(\)_]")
+        cf = cf.sub("", str(a))
 
-    cf = cf.replace(" ", "_")
-    cf = cf.replace("__", "_")
-    cf = cf.replace("_-_", "-")
+        cf = cf.replace(" ", "_")
+        cf = cf.replace("__", "_")
+        cf = cf.replace("_-_", "-")
 
-    return "%s%s" % (cf, fileext)
+        return "%s%s" % (cf, fileext)
 
 
 def write_file(filecontents, filename):

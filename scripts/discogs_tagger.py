@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 import os
 import errno
 import shutil
@@ -16,17 +17,19 @@ from discogstagger.taggerutils import (
     create_m3u,
     get_images)
 
-import os, errno
 
 def mkdir_p(path):
+
     try:
         os.makedirs(path)
-    except OSError as exc: # Python >2.5
+    except OSError as exc:  # Python >2.5
         if exc.errno == errno.EEXIST and os.path.isdir(path):
             pass
         else: raise
 
+
 def release_config(dirname, filename):
+
     my_tags = {}
     if os.path.exists(os.path.join(dirname, filename)):
         with open(os.path.join(dirname, filename)) as tagFile:
@@ -35,17 +38,42 @@ def release_config(dirname, filename):
                 my_tags[name.strip()] =  var
     return my_tags
 
+
 def config_value(section, name, config, rel_tags):
+
     val = config.get(section, name)
     if name in rel_tags:
         val = rel_tags[name]
     return val
 
+
 def config_boolean_value(section, name, config, rel_tags):
+
     val = config.getboolean(section, name)
     if name in rel_tags:
         val = rel_tags[name]
     return val
+
+
+def config_char_exceptions(exceptions):
+    """ placeholders for special characters within character exceptions. """
+
+    KEYS = {
+        "{space}": " ",
+    }
+
+    try:
+        del exceptions["__name__"]
+    except KeyError:
+        pass
+      
+    for k in KEYS:
+        try:
+            exceptions[KEYS[k]] = exceptions.pop(k)
+        except KeyError:
+            pass
+
+    return exceptions
 
 p = OptionParser()
 p.add_option("-r", "--releaseid", action="store", dest="releaseid",
@@ -121,15 +149,20 @@ enocder_tag = None
 encoder_tag = config_value("tags", "encoder", config, release_tags)
 
 use_style = config_boolean_value("details", "use_style", config, release_tags)
-split_discs_folder = config_boolean_value("details", "split_discs_folder", config, release_tags)
+split_discs_folder = config_boolean_value("details", "split_discs_folder",
+                                           config, release_tags)
 split_discs = config_boolean_value("details", "split_discs", config, release_tags)
 if split_discs:
-    split_discs_extension = config_value("details", "split_discs_extension", config, release_tags).strip('"')
-split_artists = config_value("details", "split_artists", config, release_tags).strip('"')
-split_genres_and_styles = config.get("details", "split_genres_and_styles", config, release_tags).strip('"')
+    split_discs_extension = config_value("details", "split_discs_extension",
+                                         config, release_tags).strip('"')
+split_artists = config_value("details", "split_artists", config,
+                          release_tags).strip('"')
+split_genres_and_styles = config.get("details", "split_genres_and_styles",
+                          config, release_tags).strip('"')
+char_exceptions = config_char_exceptions(config._sections["character_exceptions"])
 
-release = TaggerUtils(options.sdir, destdir, use_lower_filenames, releaseid, 
-    split_artists, split_genres_and_styles, copy_other_files)
+release = TaggerUtils(options.sdir, destdir, use_lower_filenames, releaseid,
+    split_artists, split_genres_and_styles, copy_other_files, char_exceptions)
 release.nfo_format = nfo_format
 release.m3u_format = m3u_format
 release.dir_format = dir_format
