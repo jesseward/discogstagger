@@ -41,7 +41,8 @@ class DiscogsAlbum(object):
         [ 03 ] Blunted Dummies - House For All (Eddie Richard's Mix)
         [ 04 ] Blunted Dummies - House For All (J. Acquaviva's Mix)
         [ 05 ] Blunted Dummies - House For All (Ruby Fruit Jungle Mix) """
-# remove all not needed parameters (these should be not handled in here)
+    
+    # remove all not needed parameters (these should be not handled in here)
     def __init__(self, releaseid, split_artists, split_genres_and_styles):
 
         discogs.user_agent = "discogstagger +http://github.com/jesseward"
@@ -91,7 +92,7 @@ class DiscogsAlbum(object):
     def url(self):
         """ returns the discogs url of this release """
 
-        return "http://www.discogs.com/release/%s" % self.release._id
+        return "http://www.discogs.com/release/{0}".format(self.release._id)
 
     @property
     def catno(self):
@@ -226,6 +227,7 @@ class DiscogsAlbum(object):
             re_match = re.search(scheme, position)
             
             if re_match:
+
                 logging.debug("Found a disc and track number")
                 return {'tracknumber': re_match.group("tracknumber"), 
                         'discnumber': re_match.group("discnumber")}
@@ -237,10 +239,10 @@ class DiscogsAlbum(object):
     def disctotal(self):
         """ Obtain the number of discs for the given release. """
 
-        # allows tagging of digital releases. 
+        # allows tagging of digital releases and vinyl. 
         # sample format <format name="File" qty="2" text="320 kbps">
         # assumes all releases of name=File is 1 disc.
-        if self.release.data["formats"][0]["name"] == "File":
+        if self.release.data["formats"][0]["name"] in ["File", "Vinyl"]:
             return 1
 
         return int(self.release.data["formats"][0]["qty"])
@@ -292,13 +294,25 @@ class DiscogsAlbum(object):
                 continue
 
             track.position = i + 1
-
+            
+            # if this is a multidisc release, fetch the disc number and
+            # track details from disc_and_track_no .
             if self.disctotal > 1:
                 pos = self.disc_and_track_no(t["position"])
                 track.tracknumber = int(pos["tracknumber"])
                 track.discnumber = int(pos["discnumber"])
+
+            # single disc release, we attempt to assign the track # from the 
+            # tracklist object. If we fail with a ValueError, this is a high
+            # likelyhood of a non standard naming/numbering scheme (vinyl
+            # releases), we then use the enumerate counter to assign the track
+            # number
             else:
-                track.tracknumber = int(t["position"])
+                try:
+                    track.tracknumber = int(t["position"])
+                except ValueError:
+                    track.tracknumber = i+1
+
                 track.discnumber = 1
             self.discs[int(track.discnumber)] = int(track.tracknumber)
 
@@ -310,7 +324,6 @@ class DiscogsAlbum(object):
 
             track.title = t["title"]
             track_list.append(track)
-
         return track_list
 
     @staticmethod
