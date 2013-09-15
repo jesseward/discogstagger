@@ -157,13 +157,23 @@ class DiscogsAlbum(object):
     def style(self):
         """ obtain the album styles """
 
-        return self.release.data["styles"][0]
+        try:
+            return self.release.data["styles"][0]
+        except KeyError:
+            return "Undefined" 
 
     @property
     def styles(self):
         """ obtain the album styles in one field """
 
-        rel_styles = self.split_genres_and_styles.join(self.release.data["styles"])
+        # bugfix : add support for releases where the style is not set/defined
+        # in the discogs database.        
+        try:
+            all_styles = self.release.data["styles"]
+        except KeyError:
+            all_styles = ["Undefined",]
+
+        rel_styles = self.split_genres_and_styles.join(all_styles)
         return rel_styles
 
     def _gen_artist(self, artist_data):
