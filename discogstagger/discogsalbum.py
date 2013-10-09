@@ -193,12 +193,16 @@ class DiscogsAlbum(object):
     def country(self):
         """ Obtain the country - a not so easy field, because it could mean
             the label country, the recording country, or.... """
-
-        return self.release.data["country"]
+        
+        try:
+            return self.release.data["country"]
+        except KeyError:
+            return "Unknown"
 
     @property
     def artists(self):
         """ obtain the album artists """
+
         return self._gen_artist(self.release.artists)
 
     @property
