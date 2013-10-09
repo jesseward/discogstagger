@@ -185,7 +185,7 @@ class DiscogsAlbum(object):
             # AttributeError: 'unicode' object has no attribute 'name'
             # [<Artist "A.D.N.Y*">, u'Presents', <Artist "Leiva">]
             try:
-                yield x.name
+                yield self.clean_name(x.name)
             except AttributeError:
                 pass
 
@@ -205,8 +205,7 @@ class DiscogsAlbum(object):
     def artist(self):
         """ obtain the album artist """
 
-        rel_artist = self.split_artists.join(self._gen_artist(self.release.artists))
-        return self.clean_name(rel_artist)
+        return self.split_artists.join(self._gen_artist(self.release.artists))
 
     @property
     def sort_artist(self):
@@ -289,7 +288,6 @@ class DiscogsAlbum(object):
             try:
                 sort_artist = self.clean_name(t["artists"][0].name)
                 artist = self.split_artists.join(self._gen_artist(t["artists"]))
-                artist = self.clean_name(artist)
             except IndexError:
                 artist = self.artist
                 sort_artist = self.sort_artist
