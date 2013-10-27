@@ -51,7 +51,7 @@ sudo python setup.py install
 ## Configuration 
 
 DiscogsTagger searches for the configuration file at the default location of
-/etc/discogstagger/discogs_tagger.conf, at run-time. Or you're able to specify the config 
+~/.config/discogstagger/discogs_tagger.conf, at run-time. Or you're able to specify the config 
 location with the '-c' switch.
 
 The configuration file must be present to execute the script. The default 

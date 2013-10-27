@@ -85,7 +85,8 @@ p.add_option("-d", "--destination", action="store", dest="destdir",
 p.add_option("-c", "--conf", action="store", dest="conffile",
              help="The discogstagger configuration file.")
 
-p.set_defaults(conffile="/etc/discogstagger/discogs_tagger.conf")
+p.set_defaults(conffile=os.path.expanduser(
+    "~/.config/discogstagger/discogs_tagger.conf"))
 (options, args) = p.parse_args()
 
 if not options.sdir or not os.path.exists(options.sdir):
@@ -286,7 +287,7 @@ for track in release.tag_map:
     metadata.discogs_id = releaseid
 
     if release.album.disctotal and release.album.disctotal > 1 and track.discnumber:
-        logger.info("writing disctotal and discnumber")
+        logger.debug("writing disctotal and discnumber")
         metadata.disc = track.discnumber
         metadata.disctotal = release.album.disctotal
 
@@ -332,7 +333,7 @@ for track in release.tag_map:
         imgtype = imghdr.what(None, imgdata)
 
         if imgtype in ("jpeg", "png"):
-            logger.info("Embedding album art.")
+            logger.debug("Embedding album art.")
             metadata.art = imgdata
 
     if not keepTags is None:

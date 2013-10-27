@@ -1,7 +1,12 @@
 NAME = "discogstagger"
 VERSION = "1.2.0"
 
+import os
 from distutils.core import setup
+
+user = os.getenv("USER")
+if os.getenv("SUDO_USER") is not None:
+    user = os.getenv("SUDO_USER")
 
 setup (
     name = NAME,
@@ -13,6 +18,7 @@ setup (
     scripts = ["scripts/discogs_tagger.py"],
     packages = ["discogstagger", "discogstagger.ext"],
     data_files = [(
-        "/etc/%s/" % NAME, ["conf/discogs_tagger.conf"]),
+        os.path.expanduser("~{0}/.config/{1}/".format(user, NAME)),
+            ["conf/discogs_tagger.conf"]),
         ("share/%s" % NAME, ["README.md"])]
 ) 
