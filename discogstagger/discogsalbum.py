@@ -348,16 +348,12 @@ class DiscogsAlbum(object):
                 'Aphex Twin, The' becomes 'The Aphex Twin'
             Accepts a string to clean, returns a cleansed version """
 
-        groups = {
-            "(.*),\sThe$": "The",
-        }
-
-        # remove discogs duplicate handling eg : John (1)
-        clean_target = re.sub("\s\(\d+\)", "", clean_target)
+        groups = (
+            ("(.*)\s\(\d+\)", r"\g<1>"), # Metro Area (3)->Metro Area
+            ("(.*),\sThe$", "The \g<1>"),# Aphex Twin, The->The Aphex Twin
+        )
 
         for regex in groups:
-            if re.search(r"%s" % regex, clean_target):
-                clean_target = "%s %s" % (groups[regex],
-                                          re.search("%s" % regex,
-                                          clean_target).group(1))
+            clean_target = re.sub(regex[0], regex[1], clean_target)
+
         return clean_target
