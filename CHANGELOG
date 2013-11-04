@@ -1,4 +1,16 @@
 ## Changelog
+Version 1.3.0
+
+ * improvement: simplifying the clean_name function. [jesseward]
+ * improvment: Moved default configuration file location to ~/.config/discogstagger/discogs_tagger.conf [jesseward]
+ * fix: Handle unknown countries. [jesseward]
+ * fix: _gen_artist now runs band/artist names through clean_name [Jesse Ward]
+ * fix: add support for releases where the style is not set/defined in the discogs database. [jesseward]
+ * regression: Re-adding support for tagging releases of format name type of Vinyl. Ran a tests tagging 12' singles. So far so good. [jesseward]
+ * fix: allow tagging of digital releases. Force disctotal =1 [jesseward]
+ * improvement: Moving CHARACTER_EXCEPTIONS to the config file. [jesseward]
+ * fix: ensure we yield the name property from artist object cleanup: remove temp debugging data. [jesseward]
+ * fix: multi-disc tagmap logic in taggerutils.py [jesseward]
 
 Version 1.2.0
 
