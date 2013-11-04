@@ -2,22 +2,14 @@
 
 ## What is it
 
-discogstagger is a console based audio meta-data tagger. Artist profile data is 
-retrieved via the discogs.com API.
+discogstagger is a console based audio meta-data tagger for FLAC, Ogg and MP3 audio files. Album, artist and track data profile is retrieved via the discogs.com API and then saved to the related metadata fields in the audio container.
 
-Simply provide the script with a destination directory name, that contains an
-album consisting of either FLAC or MP3 media files and the discogs.com 
-release-id. discogstagger calls out to the discogs.com API and updates the
-audio meta-data accordingly.
+To tag an album, provide the script with a target directory name (-s), that contains an album consisting of supported media files as well as the discogs.com release-id (-r). discogstagger calls out to the discogs.com API and updates the audio meta-data accordingly.
 
-If no release-id is given, the application checks, if a file "id.txt" exists
-(the name of this file can be configured in the configuration) and if this file
-contains a specific property (id_tag). If both is true the release-id from this
+If no release-id is given, the application checks, if a file "id.txt" exists (the name of this file can be configured in the configuration) and if this file contains a specific property (id_tag). If both is true the release-id from this
 file is used. This is useful for batch processing.
 
-During the process, all album images (if present) are retrieved from the API. 
-As well, a play-list (.m3u) and an information file (.nfo) are generated per
-each release.
+During the process, all album images (if present) are retrieved from the API.  As well, a play-list (.m3u) and an information file (.nfo) are generated per each release.
 
 Optionally discogstagger will embed the found album art into the file meta data
 
@@ -50,15 +42,11 @@ sudo python setup.py install
 
 ## Configuration 
 
-DiscogsTagger searches for the configuration file at the default location of
-~/.config/discogstagger/discogs_tagger.conf, at run-time. Or you're able to specify the config 
-location with the '-c' switch.
+DiscogsTagger searches for the configuration file at the default location of ~/.config/discogstagger/discogs_tagger.conf, at run-time. Or you're able to specify the config location with the '-c' switch.
 
-The configuration file must be present to execute the script. The default 
-settings (as shipped), should work without any modifications.
+The configuration file must be present to execute the script. The default settings (as shipped), should work without any modifications.
 
-Note that you may wish to modify the following default configuration options. 
-The defaults are shipped as such in attempt to be as non destructive as possible
+Note that you may wish to modify the following default configuration options. The defaults are shipped as such in attempt to be as non destructive as possible
 
 ```
 # True/False : leaves a copy of the original audio files on disk, untouched after 
@@ -67,9 +55,7 @@ keep_original=True
 embed_coverart=False
 ```
 
-To specify genre in your tags, review the use_style option. With use_style
-set to True, you're instructing discogstagger to pull the "Style" field. The style field
-is typically more genre specific than the discogs "Genre" field. In the example below (40522),
+To specify genre in your tags, review the use_style option. With use_style set to True, you're instructing discogstagger to pull the "Style" field. The style field is typically more genre specific than the discogs "Genre" field. In the example below (40522) 
 with use_style=True, the genre field is tagged as "House".
 
 ```
@@ -80,9 +66,7 @@ Genre = Electronic
 use_style=True
 ```
 
-To keep already existing tags, you can include these tags in the configuration as well. 
-Usually Rippers (e.g. RubyRipper) do include the freedb_id, which could be kept using
-the following configuration. The list of all tags could be taken from the file 
+To keep already existing tags, you can include these tags in the configuration as well.  Usually Rippers (e.g. RubyRipper) do include the freedb_id, which could be kept using the following configuration. The list of all tags could be taken from the file 
 discogstagger/ext/mediafile.py.
 
 ```
@@ -97,10 +81,7 @@ Furthermore you can use lowercase directory and filenames using the following co
 use_lower_filenames=True
 ```
 
-For batch-mode tagging, it is not necessary anymore to provide the release-id via the
-'-r' parameter on the commandline. The same is possible by using a file (by default: id.txt)
-with the key/value pair 'discogs_id'. This can be configured in the configuration via the
-following parameters as well:
+For batch-mode tagging, it is not necessary anymore to provide the release-id via the '-r' parameter on the commandline. The same is possible by using a file (by default: id.txt) with the key/value pair 'discogs_id'. This can be configured in the configuration via the following parameters as well:
 
 ```
 [batch]
@@ -134,34 +115,31 @@ Options:
 
 ## Examples
 
+The following tags the directory "Beatles_The-Revolver" with discogs release id '4250662' (http://www.discogs.com/release/4250662)
+
 ```
-$ discogs_tagger.py -s Nine\ Inch\ Nails\ Pretty\ Hate\ Machine -r 145796
+$ discogs_tagger.py -s Beatles_The-Revolver -r 4250662
+INFO:__main__:Using destination directory: Beatles_The-Revolver
 INFO:requests.packages.urllib3.connectionpool:Starting new HTTP connection (1): api.discogs.com
-INFO:discogstagger.discogsalbum:Fetching Nine Inch Nails - Pretty Hate Machine (145796)
-INFO:root:Tagging album 'Nine Inch Nails - Pretty Hate Machine'
-INFO:root:Creating destination directory 'Nine_Inch_Nails-Pretty_Hate_Machine-(TVT_2610-2)-1989-jW'
-INFO:root:Downloading and storing images
-INFO:__main__:Writing file Nine_Inch_Nails-Pretty_Hate_Machine-(TVT_2610-2)-1989-jW/01-Nine_Inch_Nails-Head_Like_A_Hole.flac
-INFO:__main__:Embedding album art.
-INFO:__main__:Writing file Nine_Inch_Nails-Pretty_Hate_Machine-(TVT_2610-2)-1989-jW/02-Nine_Inch_Nails-Terrible_Lie.flac
-INFO:__main__:Embedding album art.
-INFO:__main__:Writing file Nine_Inch_Nails-Pretty_Hate_Machine-(TVT_2610-2)-1989-jW/03-Nine_Inch_Nails-Down_In_It.flac
-INFO:__main__:Embedding album art.
-INFO:__main__:Writing file Nine_Inch_Nails-Pretty_Hate_Machine-(TVT_2610-2)-1989-jW/04-Nine_Inch_Nails-Sanctified.flac
-INFO:__main__:Embedding album art.
-INFO:__main__:Writing file Nine_Inch_Nails-Pretty_Hate_Machine-(TVT_2610-2)-1989-jW/05-Nine_Inch_Nails-Something_I_Can_Never_Have.flac
-INFO:__main__:Embedding album art.
-INFO:__main__:Writing file Nine_Inch_Nails-Pretty_Hate_Machine-(TVT_2610-2)-1989-jW/06-Nine_Inch_Nails-Kinda_I_Want_To.flac
-INFO:__main__:Embedding album art.
-INFO:__main__:Writing file Nine_Inch_Nails-Pretty_Hate_Machine-(TVT_2610-2)-1989-jW/07-Nine_Inch_Nails-Sin.flac
-INFO:__main__:Embedding album art.
-INFO:__main__:Writing file Nine_Inch_Nails-Pretty_Hate_Machine-(TVT_2610-2)-1989-jW/08-Nine_Inch_Nails-Thats_What_I_Get.flac
-INFO:__main__:Embedding album art.
-INFO:__main__:Writing file Nine_Inch_Nails-Pretty_Hate_Machine-(TVT_2610-2)-1989-jW/09-Nine_Inch_Nails-The_Only_Time.flac
-INFO:__main__:Embedding album art.
-INFO:__main__:Writing file Nine_Inch_Nails-Pretty_Hate_Machine-(TVT_2610-2)-1989-jW/10-Nine_Inch_Nails-Ringfinger.flac
-INFO:__main__:Embedding album art.
-INFO:root:Generating .nfo file
-INFO:root:Generating .m3u file
-INFO:root:Tagging complete.
+INFO:discogstagger.discogsalbum:Fetching The Beatles - Revolver (4250662)
+INFO:__main__:Tagging album 'The Beatles - Revolver'
+INFO:__main__:Creating destination directory 'The_Beatles-Revolver-(PCS_7009)-1966-jW'
+INFO:__main__:Downloading and storing images
+INFO:__main__:Writing file The_Beatles-Revolver-(PCS_7009)-1966-jW/01-The_Beatles-Taxman.mp3
+INFO:__main__:Writing file The_Beatles-Revolver-(PCS_7009)-1966-jW/02-The_Beatles-Eleanor_Rigby.mp3
+INFO:__main__:Writing file The_Beatles-Revolver-(PCS_7009)-1966-jW/03-The_Beatles-Im_Only_Sleeping.mp3
+INFO:__main__:Writing file The_Beatles-Revolver-(PCS_7009)-1966-jW/04-The_Beatles-Love_You_To.mp3
+INFO:__main__:Writing file The_Beatles-Revolver-(PCS_7009)-1966-jW/05-The_Beatles-Here_There_And_Everywhere.mp3
+INFO:__main__:Writing file The_Beatles-Revolver-(PCS_7009)-1966-jW/06-The_Beatles-Yellow_Submarine.mp3
+INFO:__main__:Writing file The_Beatles-Revolver-(PCS_7009)-1966-jW/07-The_Beatles-She_Said_She_Said.mp3
+INFO:__main__:Writing file The_Beatles-Revolver-(PCS_7009)-1966-jW/08-The_Beatles-Good_Day_Sunshine.mp3
+INFO:__main__:Writing file The_Beatles-Revolver-(PCS_7009)-1966-jW/09-The_Beatles-And_Your_Bird_Can_Sing.mp3
+INFO:__main__:Writing file The_Beatles-Revolver-(PCS_7009)-1966-jW/10-The_Beatles-For_No_One.mp3
+INFO:__main__:Writing file The_Beatles-Revolver-(PCS_7009)-1966-jW/11-The_Beatles-Dr_Robert.mp3
+INFO:__main__:Writing file The_Beatles-Revolver-(PCS_7009)-1966-jW/12-The_Beatles-I_Want_To_Tell_You.mp3
+INFO:__main__:Writing file The_Beatles-Revolver-(PCS_7009)-1966-jW/13-The_Beatles-Got_To_Get_You_Into_My_Life.mp3
+INFO:__main__:Writing file The_Beatles-Revolver-(PCS_7009)-1966-jW/14-The_Beatles-Tomorrow_Never_Knows.mp3
+INFO:__main__:Generating .nfo file
+INFO:__main__:Generating .m3u file
+INFO:__main__:Tagging complete.
 ```
