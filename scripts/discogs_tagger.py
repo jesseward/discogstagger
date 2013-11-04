@@ -175,12 +175,12 @@ release.group_name = group_name
 first_image_name = "folder.jpg"
 
 if not use_folder_jpg:
-    first_image_name = images_format + "-01.jpg"
+    first_image_name = "{0}-01.jpg".format(images_format)
 
 # ensure we were able to map the release appropriately.
 if not release.tag_map:
-    logger.error("Unable to match file list to discogs release '%s'" %
-                  releaseid)
+    logger.error("Unable to match file list to discogs release '{0}'".format(
+                  releaseid))
     sys.exit()
 
 #
@@ -189,15 +189,15 @@ if not release.tag_map:
 artist = split_artists.join(release.album.artists)
 artist = release.album.clean_name(artist)
 
-logger.info("Tagging album '%s - %s'" % (artist, release.album.title))
+logger.info("Tagging album '{0} - {1}'".format(artist, release.album.title))
 
 dest_dir_name = release.dest_dir_name
 
 if os.path.exists(dest_dir_name):
-    logger.error("Destination already exists %s" % dest_dir_name)
-    sys.exit("%s directory already exists, aborting." % dest_dir_name)
+    logger.error("Destination already exists {0}".format(dest_dir_name))
+    sys.exit("{0} directory already exists, aborting.".format(dest_dir_name))
 else:
-    logger.info("Creating destination directory '%s'" % dest_dir_name)
+    logger.info("Creating destination directory '{0}'".format(dest_dir_name))
     mkdir_p(dest_dir_name)
 
 logger.info("Downloading and storing images")
@@ -230,12 +230,13 @@ for track in release.tag_map:
     else:
         target_folder = dest_dir_name
 
-    logger.debug("Source file %s" % os.path.join(options.sdir,
-                 track.orig_file))
-    logger.info("Writing file %s" % os.path.join(target_folder, track.new_file))
-    logger.debug("metadata -> %.2d %s - %s" % (track.tracknumber, track.artist,
-                 track.title))
-    logger.debug("----------> %s" % track.new_file)
+    logger.debug("Source file {0}".format(os.path.join(options.sdir,
+                 track.orig_file)))
+    logger.info("Writing file {0}".format(os.path.join(target_folder,
+                track.new_file)))
+    logger.debug("metadata -> {0:2d} {1} - {2}".format(track.tracknumber,
+                track.artist, track.title))
+    logger.debug("----------> {0}".format(track.new_file))
 
     shutil.copyfile(track.orig_file,
                     os.path.join(target_folder, track.new_file))
@@ -260,7 +261,7 @@ for track in release.tag_map:
         fileext = os.path.splitext(track.orig_file)[1]
         disc_title_extension = release._value_from_tag_format(split_discs_extension, 
             track.tracknumber, track.position - 1, fileext)
-        metadata.album = "%s%s" % (metadata.album, disc_title_extension)
+        metadata.album = "{0}{1}".format(metadata.album, disc_title_extension)
 
     metadata.composer = artist
     metadata.albumartist = artist
@@ -358,21 +359,21 @@ if copy_other_files and len(release.copy_files) > 0:
     logger.info("copying files from source directory")
     copy_files = release.copy_files
     dir_list = os.listdir(options.sdir)
-    logger.debug("start_dir: %s" % options.sdir)
-    logger.debug("dir list: %s" % dir_list)
+    logger.debug("start_dir: {0}".format(options.sdir))
+    logger.debug("dir list: {0}".format(dir_list))
     file_list = [os.path.join(options.sdir, x) for x in dir_list if not x.lower().endswith(TaggerUtils.FILE_TYPE) 
                                         and os.path.isfile(os.path.join(options.sdir, x))]
     copy_files.extend(file_list)
 
     for fname in copy_files:
         if not fname.endswith(".m3u"):
-            logger.debug("source: %s" % fname)
-            logger.debug("target: %s" % os.path.join(dest_dir_name, os.path.basename(fname)))
+            logger.debug("source: {0}".format(fname))
+            logger.debug("target: {0}".format(os.path.join(dest_dir_name, os.path.basename(fname))))
             shutil.copyfile(fname, os.path.join(dest_dir_name, os.path.basename(fname)))
 
 # remove source directory, if configured as such.
 if not keep_original:
-    logger.info("Deleting source directory '%s'" % options.sdir)
+    logger.info("Deleting source directory '{0}'".format(options.sdir))
     shutil.rmtree(options.sdir)
 
 
