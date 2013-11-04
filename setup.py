@@ -1,5 +1,5 @@
 NAME = "discogstagger"
-VERSION = "1.2.0"
+VERSION = "1.3.0"
 
 import os
 from distutils.core import setup
@@ -20,5 +20,5 @@ setup (
     data_files = [(
         os.path.expanduser("~{0}/.config/{1}/".format(user, NAME)),
             ["conf/discogs_tagger.conf"]),
-        ("share/%s" % NAME, ["README.md"])]
+        ("share/{0}".format(NAME), ["README.md"])]
 ) 
