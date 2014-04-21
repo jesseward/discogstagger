@@ -8,6 +8,7 @@ import logging
 from unicodedata import normalize
 
 from discogsalbum import DiscogsAlbum, TrackContainer
+from discogsauth import DiscogsAuth
 
 reload(sys)
 sys.setdefaultencoding("utf-8")
@@ -313,19 +314,20 @@ def get_images(images, dest_dir_name, images_format, first_image_name):
     """ Download and store any available images """
 
     if images:
+        discogs_auth = DiscogsAuth()
         for i, image in enumerate(images, 0):
-            logger.debug("Downloading image '%s'" % image)
+            logger.debug('Downloading image "{0}"'.format(image))
             try:
-                url_fh = TagOpener()
-
-                picture_name = ""
+                picture_name = ''
                 if i == 0:
                     picture_name = first_image_name
                 else:
                     picture_name = images_format + "-%.2d.jpg" % i
 
-                url_fh.retrieve(image, os.path.join(dest_dir_name, picture_name))
+                resp, content = discogs_auth.handle.request(image)
+                if resp['status'] == '200':
+                   with open(os.path.join(dest_dir_name, picture_name), 'w') as fh:
+                       fh.write(content)
             except Exception as e:
-                logger.error("Unable to download image '%s', skipping."
-                              % image)
-                print e
+                logger.error("Unable to download image '{0}', skipping. Error: {1}".format(
+                    image, e))
