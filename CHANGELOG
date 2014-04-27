@@ -1,4 +1,8 @@
 ## Changelog
+
+Version 1.4.0
+
+* improvement: now supports discogs OAuth for image retrieval via the API.
 Version 1.3.0
 
  * improvement: simplifying the clean_name function. [jesseward]
