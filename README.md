@@ -18,6 +18,7 @@ Optionally discogstagger will embed the found album art into the file meta data
 * Mutagen 
 * discogs-client 
 * requests
+* OAuth2
 
 I am also packaging/reusing the MediaFile library from the "beets" project. This
 will be packaged with discogs tagger until MediaFile is split out to its own
