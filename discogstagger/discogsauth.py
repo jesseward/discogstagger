@@ -8,8 +8,8 @@ class DiscogsAuth(object):
     ''' Returns an OAuth authentication handle for requests against the
         Discogs API. '''
 
-    consumer_key = ''
-    consumer_secret = ''
+    consumer_key = 'sxOsKeryYGLwrSsHtRVA'
+    consumer_secret = 'npfUDQEVDgjNLPIqpSvcGyLWqaMcUaeX'
 
     request_token_url = 'http://api.discogs.com/oauth/request_token'
     authorize_url = 'http://www.discogs.com/oauth/authorize'
