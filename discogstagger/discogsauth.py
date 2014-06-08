@@ -36,7 +36,7 @@ class DiscogsAuth(object):
             access_token. Then persists the access_token to disk. '''
 
         client = oauth.Client(self.consumer)
-        resp, content = client.request(self.request_token_url, 'POST', headers={'user-agent': 'discogstaggers'})
+        resp, content = client.request(self.request_token_url, 'POST', headers={'user-agent': 'discogstagger +http://github.com/jesseward'})
 
         if resp['status'] != '200':
             raise Exception('Invalid response {0}.'.format(resp['status']))
@@ -56,7 +56,7 @@ class DiscogsAuth(object):
             token.set_verifier(verification_code)
             client = oauth.Client(self.consumer, token)
 
-            resp, content = client.request(self.access_token_url, 'POST', headers={'user-agent': 'discogstaggers'})
+            resp, content = client.request(self.access_token_url, 'POST', headers={'user-agent': 'discogstagger +http://github.com/jesseward'})
 
             if resp['status'] != '200':
                 raise Exception('Invalid response {0}.'.format(rep['status']))
