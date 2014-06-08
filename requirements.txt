@@ -1,4 +1,4 @@
 discogs-client>=1.1.1
 mutagen>=1.21
 requests>=1.2.0
-auth2>=1.5.211
+oauth2>=1.5.211

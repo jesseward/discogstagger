@@ -39,7 +39,7 @@ class DiscogsAuth(object):
         resp, content = client.request(self.request_token_url, 'POST')
 
         if resp['status'] != '200':
-            raise Exception('Invalid response {0}.'.format(rep['status']))
+            raise Exception('Invalid response {0}.'.format(resp['status']))
 
         request_token = dict(urlparse.parse_qsl(content))
 
