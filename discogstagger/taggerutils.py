@@ -8,17 +8,16 @@ import logging
 from unicodedata import normalize
 
 from discogsalbum import DiscogsAlbum, TrackContainer
-from discogsauth import DiscogsAuth
+from discogsauth import DiscogsAuth, USER_AGENT
 
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
 logger = logging.getLogger(__name__)
 
-
 class TagOpener(FancyURLopener, object):
 
-    version = "discogstagger +http://github.com/jesseward"
+    version = USER_AGENT
 
     def __init__(self):
         FancyURLopener.__init__(self)
@@ -324,7 +323,8 @@ def get_images(images, dest_dir_name, images_format, first_image_name):
                 else:
                     picture_name = images_format + "-%.2d.jpg" % i
 
-                resp, content = discogs_auth.handle.request(image)
+                resp, content = discogs_auth.handle.request(image, 'POST',
+                        headers={'user-agent': USER_AGENT })
                 if resp['status'] == '200':
                    with open(os.path.join(dest_dir_name, picture_name), 'w') as fh:
                        fh.write(content)
