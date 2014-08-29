@@ -1,5 +1,13 @@
 ## Changelog
 
+Version 2.0.0
+
+* support version 2.0 of the discogs_client library.
+
+Version 1.4.1
+
+* update requirements.txt locking discogstagger at version 1.1.1 of the discogs_client API
+
 Version 1.4.0
 
 * improvement: now supports discogs OAuth for image retrieval via the API.

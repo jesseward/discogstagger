@@ -45,8 +45,8 @@ class DiscogsAlbum(object):
     # remove all not needed parameters (these should be not handled in here)
     def __init__(self, releaseid, split_artists, split_genres_and_styles):
 
-        discogs.user_agent = "discogstagger +http://github.com/jesseward"
-        self.release = discogs.Release(releaseid)
+        discogs_handler = discogs.Client('discogstagger +http://github.com/jesseward')
+        self.release = discogs_handler.release(int(releaseid))
 
         self.split_artists = split_artists
         self.split_genres_and_styles = split_genres_and_styles
@@ -86,13 +86,13 @@ class DiscogsAlbum(object):
     def releaseid(self):
         """ retuns the discogs release id """
 
-        return self.release._id
+        return self.release.id
 
     @property
     def url(self):
         """ returns the discogs url of this release """
 
-        return "http://www.discogs.com/release/{0}".format(self.release._id)
+        return "http://www.discogs.com/release/{0}".format(self.release.id)
 
     @property
     def catno(self):
@@ -285,13 +285,13 @@ class DiscogsAlbum(object):
         discsubtitle = None
 
         for i, t in enumerate((x for x in self.release.tracklist
-                              if x["type"] == "Track")):
+                              if x.position != '')):
 
             # this is pretty much the same as the artist 
             # stuff in the album, try to refactor it
             try:
-                sort_artist = self.clean_name(t["artists"][0].name)
-                artist = self.split_artists.join(self._gen_artist(t["artists"]))
+                sort_artist = self.clean_name(t.artists[0].name)
+                artist = self.split_artists.join(self._gen_artist(t.artists))
             except IndexError:
                 artist = self.artist
                 sort_artist = self.sort_artist
@@ -301,8 +301,8 @@ class DiscogsAlbum(object):
             # on multiple discs there do appears a subtitle as the first "track"
             # on the cd in discogs, this seems to be wrong, but we would like to
             # handle it anyway
-            if t["title"] and not t["position"] and not t["duration"]:
-                discsubtitle = t["title"]
+            if t.title and not t.position and not t.duration:
+                discsubtitle = t.title
                 continue
 
             track.position = i + 1
@@ -310,7 +310,7 @@ class DiscogsAlbum(object):
             # if this is a multidisc release, fetch the disc number and
             # track details from disc_and_track_no .
             if self.disctotal > 1:
-                pos = self.disc_and_track_no(t["position"])
+                pos = self.disc_and_track_no(t.position)
                 track.tracknumber = int(pos["tracknumber"])
                 track.discnumber = int(pos["discnumber"])
 
@@ -321,7 +321,7 @@ class DiscogsAlbum(object):
             # number
             else:
                 try:
-                    track.tracknumber = int(t["position"])
+                    track.tracknumber = int(t.position)
                 except ValueError:
                     track.tracknumber = i+1
 
@@ -334,7 +334,7 @@ class DiscogsAlbum(object):
             track.sortartist = sort_artist
             track.artist = artist
 
-            track.title = t["title"]
+            track.title = t.title
             track_list.append(track)
         return track_list
 
