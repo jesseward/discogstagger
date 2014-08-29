@@ -1,5 +1,5 @@
 NAME = "discogstagger"
-VERSION = "1.4.0"
+VERSION = "2.0.0"
 
 import os
 from distutils.core import setup
