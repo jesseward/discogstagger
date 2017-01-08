@@ -12,9 +12,9 @@ class DiscogsAuth(object):
     consumer_key = 'sxOsKeryYGLwrSsHtRVA'
     consumer_secret = 'npfUDQEVDgjNLPIqpSvcGyLWqaMcUaeX'
 
-    request_token_url = 'http://api.discogs.com/oauth/request_token'
-    authorize_url = 'http://www.discogs.com/oauth/authorize'
-    access_token_url = 'http://api.discogs.com/oauth/access_token'
+    request_token_url = 'https://api.discogs.com/oauth/request_token'
+    authorize_url = 'https://www.discogs.com/oauth/authorize'
+    access_token_url = 'https://api.discogs.com/oauth/access_token'
 
     def __init__(self):
 
