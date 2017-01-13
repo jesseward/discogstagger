@@ -1,9 +1,12 @@
 import logging
+import os
 import re
+import shutil
 
-import discogs_client as discogs
+import requests
 
 logger = logging.getLogger(__name__)
+
 
 class memoized_property(object):
 
@@ -18,9 +21,11 @@ class memoized_property(object):
         obj.__dict__[self.__name__] = result = self.fget(obj)
         return result
 
+
 class TrackContainer(object):
 
     pass
+
 
 class DiscogsAlbum(object):
     """ Wraps the discogs-client-api script, abstracting the minimal set of
@@ -41,11 +46,16 @@ class DiscogsAlbum(object):
         [ 03 ] Blunted Dummies - House For All (Eddie Richard's Mix)
         [ 04 ] Blunted Dummies - House For All (J. Acquaviva's Mix)
         [ 05 ] Blunted Dummies - House For All (Ruby Fruit Jungle Mix) """
-    
-    # remove all not needed parameters (these should be not handled in here)
-    def __init__(self, releaseid, split_artists, split_genres_and_styles):
 
-        discogs_handler = discogs.Client('discogstagger +http://github.com/jesseward')
+    # remove all not needed parameters (these should be not handled in here)
+    def __init__(self, discogs_handler, releaseid, split_artists, split_genres_and_styles):
+        """Fetches a release from the discogs.com API
+
+        :param discogs_handle: An instance of the DiscogsWrapper
+        :param releaseid: A discogs release id
+        :param split_artists: Boolean value indicating if artists should be split
+        :param split_genres_and_styles: Boolean value indicating if genre/styles should be split."""
+
         self.release = discogs_handler.release(int(releaseid))
 
         self.split_artists = split_artists
@@ -123,13 +133,19 @@ class DiscogsAlbum(object):
 
     @property
     def year(self):
-        """ returns the album release year obtained from API 2.0 """
+        """ returns the album release year obtained from API 2.0.
+
+        :return: A string representing the year in which the item was released."""
 
         good_year = re.compile("\d\d\d\d")
-        try:
-            return good_year.match(str(self.release.data["year"])).group(0)
-        except IndexError:
+        release_date = self.release.data.get("year", "1900")
+        parsed_year = good_year.match(str(release_date))
+
+        # return a default year in the event the release did not include a year
+        if not parsed_year:
             return "1900"
+
+        return parsed_year.group(0)
 
     @property
     def master_id(self):
@@ -160,25 +176,25 @@ class DiscogsAlbum(object):
         try:
             return self.release.data["styles"][0]
         except KeyError:
-            return "Undefined" 
+            return "Undefined"
 
     @property
     def styles(self):
         """ obtain the album styles in one field """
 
         # bugfix : add support for releases where the style is not set/defined
-        # in the discogs database.        
+        # in the discogs database.
         try:
             all_styles = self.release.data["styles"]
         except KeyError:
-            all_styles = ["Undefined",]
+            all_styles = ["Undefined", ]
 
         rel_styles = self.split_genres_and_styles.join(all_styles)
         return rel_styles
 
     def _gen_artist(self, artist_data):
         """ yields a list of normalized release artists name properties """
-       
+
         for x in artist_data:
             # bugfix to avoid the following scenario, or ensure we're yielding
             # and artist object.
@@ -193,7 +209,7 @@ class DiscogsAlbum(object):
     def country(self):
         """ Obtain the country - a not so easy field, because it could mean
             the label country, the recording country, or.... """
-        
+
         try:
             return self.release.data["country"]
         except KeyError:
@@ -231,20 +247,20 @@ class DiscogsAlbum(object):
         # some variance in how discogs releases spanning multiple discs
         # or formats are kept, add regexs here as failures are encountered
         NUMBERING_SCHEMES = (
-            "^CD(?P<discnumber>\d+)-(?P<tracknumber>\d+)$", # CD01-12
-            "^(?P<discnumber>\d+)-(?P<tracknumber>\d+)$",   # 1-02
-            "^(?P<discnumber>\d+).(?P<tracknumber>\d+)$",   # 1.05
+            "^CD(?P<discnumber>\d+)-(?P<tracknumber>\d+)$",  # CD01-12
+            "^(?P<discnumber>\d+)-(?P<tracknumber>\d+)$",    # 1-02
+            "^(?P<discnumber>\d+).(?P<tracknumber>\d+)$",    # 1.05
         )
 
         for scheme in NUMBERING_SCHEMES:
             re_match = re.search(scheme, position)
-            
+
             if re_match:
 
                 logging.debug("Found a disc and track number")
-                return {'tracknumber': re_match.group("tracknumber"), 
+                return {'tracknumber': re_match.group("tracknumber"),
                         'discnumber': re_match.group("discnumber")}
-        
+
         logging.error("Unable to match multi-disc track/position")
         return False
 
@@ -252,7 +268,7 @@ class DiscogsAlbum(object):
     def disctotal(self):
         """ Obtain the number of discs for the given release. """
 
-        # allows tagging of digital releases and vinyl. 
+        # allows tagging of digital releases and vinyl.
         # sample format <format name="File" qty="2" text="320 kbps">
         # assumes all releases of name=File is 1 disc.
         if self.release.data["formats"][0]["name"] in ["File", "Vinyl"]:
@@ -280,14 +296,14 @@ class DiscogsAlbum(object):
     @memoized_property
     def tracks(self):
         """ provides the tracklist of the given release id """
-    
+
         track_list = []
         discsubtitle = None
 
         for i, t in enumerate((x for x in self.release.tracklist
                               if x.position != '')):
 
-            # this is pretty much the same as the artist 
+            # this is pretty much the same as the artist
             # stuff in the album, try to refactor it
             try:
                 sort_artist = self.clean_name(t.artists[0].name)
@@ -306,7 +322,7 @@ class DiscogsAlbum(object):
                 continue
 
             track.position = i + 1
-            
+
             # if this is a multidisc release, fetch the disc number and
             # track details from disc_and_track_no .
             if self.disctotal > 1:
@@ -314,7 +330,7 @@ class DiscogsAlbum(object):
                 track.tracknumber = int(pos["tracknumber"])
                 track.discnumber = int(pos["discnumber"])
 
-            # single disc release, we attempt to assign the track # from the 
+            # single disc release, we attempt to assign the track # from the
             # tracklist object. If we fail with a ValueError, this is a high
             # likelyhood of a non standard naming/numbering scheme (vinyl
             # releases), we then use the enumerate counter to assign the track
@@ -349,11 +365,38 @@ class DiscogsAlbum(object):
             Accepts a string to clean, returns a cleansed version """
 
         groups = (
-            ("(.*)\s\(\d+\)", r"\g<1>"), # Metro Area (3)->Metro Area
-            ("(.*),\sThe$", "The \g<1>"),# Aphex Twin, The->The Aphex Twin
+            ("(.*)\s\(\d+\)", r"\g<1>"),   # Metro Area (3)->Metro Area
+            ("(.*),\sThe$", "The \g<1>"),  # Aphex Twin, The->The Aphex Twin
         )
 
         for regex in groups:
             clean_target = re.sub(regex[0], regex[1], clean_target)
 
         return clean_target
+
+    def get_images(self, dest_dir_name, images_format, first_image_name):
+        """Download and store any available images to local disk
+
+        :param dest_dir_name: target save location for images
+        :param images_format: image file naming format
+        :param first_image_name: file name format for the first image."""
+
+        if not self.images:
+            logger.info("No images to download.")
+            return
+
+        for i, image in enumerate(self.images, 0):
+            picture_name = ""
+            if i == 0:
+                picture_name = first_image_name
+            else:
+                picture_name = images_format + "-%.2d.jpg" % i
+
+            response = requests.get(image, stream=True)
+            if response.status_code == 200:
+                logger.debug(u"Downloaded image. release-id={release},url={url}".format(release=self.releaseid, url=image))
+                with open(os.path.join(dest_dir_name, picture_name), "wb") as out_file:
+                    shutil.copyfileobj(response.raw, out_file)
+                del response
+            else:
+                logger.error(u"error response. http status code={code}, url={url}".format(code=response.status_code, url=image))

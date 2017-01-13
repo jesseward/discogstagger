@@ -8,19 +8,13 @@ import logging
 from unicodedata import normalize
 
 from discogsalbum import DiscogsAlbum, TrackContainer
-from discogsauth import DiscogsAuth, USER_AGENT
+from discogswrapper import DiscogsWrapper
+
 
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
 logger = logging.getLogger(__name__)
-
-class TagOpener(FancyURLopener, object):
-
-    version = USER_AGENT
-
-    def __init__(self):
-        FancyURLopener.__init__(self)
 
 
 class TaggerUtils(object):
@@ -57,7 +51,7 @@ class TaggerUtils(object):
         self.files_to_tag = result["target_list"]
         if self.copy_other_files:
             self.copy_files = result["copy_files"]
-        self.album = DiscogsAlbum(ogsrelid, split_artists, split_genres_and_styles)
+        self.album = DiscogsAlbum(DiscogsWrapper().discogs, ogsrelid, split_artists, split_genres_and_styles)
         self.use_lower = use_lower
 
         if len(self.files_to_tag) == len(self.album.tracks):
@@ -307,27 +301,3 @@ def create_m3u(tag_map, folder_names, dest_dir_name, m3u_filename):
         m3u += "%s%s\n" % (folder_name, track.new_file)
 
     return write_file(m3u, os.path.join(dest_dir_name, m3u_filename))
-
-
-def get_images(images, dest_dir_name, images_format, first_image_name):
-    """ Download and store any available images """
-
-    if images:
-        discogs_auth = DiscogsAuth()
-        for i, image in enumerate(images, 0):
-            logger.debug('Downloading image "{0}"'.format(image))
-            try:
-                picture_name = ''
-                if i == 0:
-                    picture_name = first_image_name
-                else:
-                    picture_name = images_format + "-%.2d.jpg" % i
-
-                resp, content = discogs_auth.handle.request(image, 'POST',
-                        headers={'user-agent': USER_AGENT })
-                if resp['status'] == '200':
-                   with open(os.path.join(dest_dir_name, picture_name), 'w') as fh:
-                       fh.write(content)
-            except Exception as e:
-                logger.error("Unable to download image '{0}', skipping. Error: {1}".format(
-                    image, e))

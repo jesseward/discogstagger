@@ -14,8 +14,8 @@ from discogstagger.ext.mediafile import MediaFile
 from discogstagger.taggerutils import (
     TaggerUtils,
     create_nfo,
-    create_m3u,
-    get_images)
+    create_m3u)
+from discogstagger.discogswrapper import DiscogsWrapper
 
 
 def mkdir_p(path):
@@ -201,7 +201,7 @@ else:
     mkdir_p(dest_dir_name)
 
 logger.info("Downloading and storing images")
-get_images(release.album.images, dest_dir_name, images_format, first_image_name)
+release.album.get_images(dest_dir_name, images_format, first_image_name)
 
 disc_names = dict()
 folder_names = dict()
