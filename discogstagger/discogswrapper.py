@@ -53,8 +53,7 @@ class DiscogsWrapper(object):
             verification_code = input('Verification code > ')
 
             try:
-                access_token, access_secret = self.discogs.get_access_token(
-                        verification_code)
+                access_token, access_secret = self.discogs.get_access_token(verification_code)
             except HTTPError as e:
                 print('\nUnable to authenticate, please try again. error="{0}"\n'.format(e))
                 continue
@@ -64,8 +63,7 @@ class DiscogsWrapper(object):
 
         # persist token to disk.
         with open(self.token_file, 'w') as fh:
-            fh.write('{token}||{secret}'.format(token=access_token, secret=
-                     access_secret))
+            fh.write('{token}||{secret}'.format(token=access_token, secret=access_secret))
 
     def _get_access_token(self):
         """

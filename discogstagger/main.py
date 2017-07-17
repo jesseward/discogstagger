@@ -223,7 +223,7 @@ def init_logging(conf):
 @click.option('-c', '--conf', default=default_config(), help='The discogstagger configuration file.')
 @click.option('-d', '--destination', help='The (base) directory to copy the tagged files to')
 @click.option('-r', '--releaseid', help='The discogs.com release id of the target album')
-@click.option('-s', '--source',  help='The directory that you wish to tag', type=click.Path(exists=True))
+@click.option('-s', '--source', help='The directory that you wish to tag', type=click.Path(exists=True))
 def tagger(conf, destination, releaseid, source):
 
     _log = init_logging(conf)
@@ -250,7 +250,7 @@ def tagger(conf, destination, releaseid, source):
     # ensure we were able to map the release appropriately.
     if not release.tag_map:
         _log.fatal("Unable to map available audio files to the number of tracks in the Discogs release '{0}'. Exiting".format(
-                      release_id))
+                   release_id))
         sys.exit(1)
 
     artist = cfg.split_artists.join(release.album.artists)
@@ -423,8 +423,8 @@ def tagger(conf, destination, releaseid, source):
         dir_list = os.listdir(source)
         _log.debug("start_dir: {0}".format(source))
         _log.debug("dir list: {0}".format(dir_list))
-        file_list = [os.path.join(source, x) for x in dir_list if not x.lower().endswith(TaggerUtils.FILE_TYPE)
-                     and os.path.isfile(os.path.join(source, x))]
+        file_list = [os.path.join(source, x) for x in dir_list if not x.lower().endswith(TaggerUtils.FILE_TYPE) and
+                     os.path.isfile(os.path.join(source, x))]
         copy_files.extend(file_list)
 
         for fname in copy_files:

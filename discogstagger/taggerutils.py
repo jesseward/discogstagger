@@ -10,18 +10,16 @@ from unicodedata import normalize
 
 
 class TaggerUtils(object):
-    """ Accepts a destination directory name and discogs release id.
-    TaggerUtils returns a the corresponding metadata information , in which
-    we can write to disk. The assumption here is that the destination
-    direcory contains a single album in a support format (mp3 or flac).
-
-    The class also provides a few methods that create supplimental files,
-    relvant to a given album (m3u, nfo file and album art grabber.)"""
+    """Provides logic for source (discogs object) to destination (filenames) mapping as well as helper
+    functions for filenaming and cleansing."""
 
     # supported file types.
     FILE_TYPE = ('.mp3', '.flac',)
 
     def __init__(self, discogs_album, tagger_config):
+        """
+        :param discogs_album: a DiscogsAlbum obj
+        :param tagger_config: a TaggerConfig obj."""
 
         self._log = logging.getLogger(__name__)
         self.tagger_config = tagger_config
@@ -39,7 +37,8 @@ class TaggerUtils(object):
         if len(self.files_to_tag) == len(self.album.tracks):
             self.tag_map = self._get_tag_map()
         else:
-            self._log.error('Unbalanced files_to_tag vs album.tracks. len(files_to_tag)={0}, len(album.tracks)={1})'.format(len(self.files_to_tag), len(self.album.tracks)))
+            self._log.error('Unbalanced files_to_tag vs album.tracks. len(files_to_tag)={0}, len(album.tracks)={1})'.format(
+                            len(self.files_to_tag), len(self.album.tracks)))
             self._log.debug('Unmatched files_to_tag. files_to_tag={0}'.format(self.files_to_tag))
             self._log.debug('Ummatched album.tracks. album.tracks={0}'.format(self.album.tracks))
             self.tag_map = None

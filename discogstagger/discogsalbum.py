@@ -307,7 +307,7 @@ class DiscogsAlbum(object):
                     try:
                         track_tracknumber = int(t.position)
                     except ValueError:
-                        track_tracknumber = i+1
+                        track_tracknumber = i + 1
                     track_discnumber = 1
 
                 self.discs[int(track_discnumber)] = int(track_tracknumber)
