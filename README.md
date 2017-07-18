@@ -6,8 +6,7 @@ discogstagger is a console based audio meta-data tagger for FLAC, Ogg and MP3 au
 
 To tag an album, provide the script with a target directory name (-s), that contains an album consisting of supported media files as well as the discogs.com release-id (-r). discogstagger calls out to the discogs.com API and updates the audio meta-data accordingly.
 
-If no release-id is given, the application checks, if a file "id.txt" exists (the name of this file can be configured in the configuration) and if this file contains a specific property (id_tag). If both is true the release-id from this
-file is used. This is useful for batch processing.
+If no release-id is given the application checks if a file "id.txt" exists (the name of this file can be configured in the configuration) and if this file contains a specific property (id_tag). If both is true the release-id from this file is used. This is useful for batch processing.
 
 During the process, all album images (if present) are retrieved from the API.  As well, a play-list (.m3u) and an information file (.nfo) are generated per each release.
 
@@ -18,11 +17,10 @@ Optionally discogstagger will embed the found album art into the file meta data
 * Mutagen 
 * discogs-client 
 * requests
-* OAuth2
+* Mediafile
+* OAuth
 
-I am also packaging/reusing the MediaFile library from the "beets" project. This
-will be packaged with discogs tagger until MediaFile is split out to its own
-package.
+I am also packaging/reusing the MediaFile library from the "beets" project. This will be packaged with discogs tagger until MediaFile is split out to its own package.
 
 ## Installation 
 
@@ -30,15 +28,20 @@ Fetch the repo from github
 ```
 git clone https://github.com/jesseward/discogstagger.git
 ```
+Create a virtual environment for your installations
+```
+python3 -m venv ~/.virtualenvs/discogstagger
+source ~/.virtualenvs/discogstagger/bin/activate
+```
 
-Install the script requirements
+Run the setuptools installation.
 ```
-sudo pip install -r requirements.txt
+python setup.py install
 ```
 
-Run through set-up script
+Optionally you can install the developer requirements, if you plan on running the test suite or making changes to the tool
 ```
-sudo python setup.py install
+pip install -r dev_requirements.txt
 ```
 
 ## Configuration 
@@ -67,14 +70,6 @@ Genre = Electronic
 use_style=True
 ```
 
-To keep already existing tags, you can include these tags in the configuration as well.  Usually Rippers (e.g. RubyRipper) do include the freedb_id, which could be kept using the following configuration. The list of all tags could be taken from the file 
-discogstagger/ext/mediafile.py.
-
-```
-# Keep the following tags
-keep_tags=freedb_id
-```
-
 Furthermore you can use lowercase directory and filenames using the following configuration:
 
 ```
@@ -100,47 +95,32 @@ and no id.txt file. The program will then just exit with an error message.
 The command line takes the following parameters:
 
 ```
-Usage: discogs_tagger.py [options]
+$ discogs-tagger --help
+Usage: discogs-tagger [OPTIONS]
 
 Options:
-  -h, --help            show this help message and exit
-  -r RELEASEID, --releaseid=RELEASEID
-                        The discogs.com release id of the target album
-  -s SDIR, --source=SDIR
-                        The directory that you wish to tag
-  -d DESTDIR, --destination=DESTDIR
-                        The (base) directory to copy the tagged files to
-  -c CONFFILE, --conf=CONFFILE
-                        The discogstagger configuration file.
+  -c, --conf TEXT         The discogstagger configuration file.
+  -d, --destination TEXT  The (base) directory to copy the tagged files to
+  -r, --releaseid TEXT    The discogs.com release id of the target album
+  -s, --source PATH       The directory that you wish to tag
+  --help                  Show this message and exit.
 ```
 
 ## Examples
 
-The following tags the directory "Beatles_The-Revolver" with discogs release id '4250662' (http://www.discogs.com/release/4250662)
+The following tags the directory "Pepe_Bradock-Deep_Burnt" with discogs release id '204' (http://www.discogs.com/release/204)
 
 ```
-$ discogs_tagger.py -s Beatles_The-Revolver -r 4250662
-INFO:__main__:Using destination directory: Beatles_The-Revolver
-INFO:requests.packages.urllib3.connectionpool:Starting new HTTP connection (1): api.discogs.com
-INFO:discogstagger.discogsalbum:Fetching The Beatles - Revolver (4250662)
-INFO:__main__:Tagging album 'The Beatles - Revolver'
-INFO:__main__:Creating destination directory 'The_Beatles-Revolver-(PCS_7009)-1966-jW'
-INFO:__main__:Downloading and storing images
-INFO:__main__:Writing file The_Beatles-Revolver-(PCS_7009)-1966-jW/01-The_Beatles-Taxman.mp3
-INFO:__main__:Writing file The_Beatles-Revolver-(PCS_7009)-1966-jW/02-The_Beatles-Eleanor_Rigby.mp3
-INFO:__main__:Writing file The_Beatles-Revolver-(PCS_7009)-1966-jW/03-The_Beatles-Im_Only_Sleeping.mp3
-INFO:__main__:Writing file The_Beatles-Revolver-(PCS_7009)-1966-jW/04-The_Beatles-Love_You_To.mp3
-INFO:__main__:Writing file The_Beatles-Revolver-(PCS_7009)-1966-jW/05-The_Beatles-Here_There_And_Everywhere.mp3
-INFO:__main__:Writing file The_Beatles-Revolver-(PCS_7009)-1966-jW/06-The_Beatles-Yellow_Submarine.mp3
-INFO:__main__:Writing file The_Beatles-Revolver-(PCS_7009)-1966-jW/07-The_Beatles-She_Said_She_Said.mp3
-INFO:__main__:Writing file The_Beatles-Revolver-(PCS_7009)-1966-jW/08-The_Beatles-Good_Day_Sunshine.mp3
-INFO:__main__:Writing file The_Beatles-Revolver-(PCS_7009)-1966-jW/09-The_Beatles-And_Your_Bird_Can_Sing.mp3
-INFO:__main__:Writing file The_Beatles-Revolver-(PCS_7009)-1966-jW/10-The_Beatles-For_No_One.mp3
-INFO:__main__:Writing file The_Beatles-Revolver-(PCS_7009)-1966-jW/11-The_Beatles-Dr_Robert.mp3
-INFO:__main__:Writing file The_Beatles-Revolver-(PCS_7009)-1966-jW/12-The_Beatles-I_Want_To_Tell_You.mp3
-INFO:__main__:Writing file The_Beatles-Revolver-(PCS_7009)-1966-jW/13-The_Beatles-Got_To_Get_You_Into_My_Life.mp3
-INFO:__main__:Writing file The_Beatles-Revolver-(PCS_7009)-1966-jW/14-The_Beatles-Tomorrow_Never_Knows.mp3
-INFO:__main__:Generating .nfo file
-INFO:__main__:Generating .m3u file
-INFO:__main__:Tagging complete.
+$ discogs-tagger -s Pepe_Bradock-Deep_Burnt -r 204
+2017-07-17 04:36:30,686 discogstagger.main INFO     Attempting to tag files from target destination=Pepe_Bradock-Deep_Burnt
+2017-07-17 04:36:31,044 discogstagger.discogsalbum INFO     Fetching discogs release. artist=Pépé Bradock & The Grand Brûlé's Choir, title=Burning, id=204
+2017-07-17 04:36:31,047 discogstagger.main INFO     Tagging album 'Pépé Bradock & The Grand Brûlé's Choir - Burning'
+2017-07-17 04:36:31,047 discogstagger.main INFO     Creating destination directory 'Pepe_Bradock_and_The_Grand_Brules_Choir-Burning-(KIF_S_A_08)-1999-jW'
+2017-07-17 04:36:31,048 discogstagger.main INFO     Downloading and storing images
+2017-07-17 04:36:33,966 discogstagger.main INFO     Writing file Pepe_Bradock_and_The_Grand_Brules_Choir-Burning-(KIF_S_A_08)-1999-jW/01-Pepe_Bradock_and_The_Grand_Brules_Choir-Burning_Hot.mp3
+2017-07-17 04:36:34,011 discogstagger.main INFO     Writing file Pepe_Bradock_and_The_Grand_Brules_Choir-Burning-(KIF_S_A_08)-1999-jW/02-Pepe_Bradock_and_The_Grand_Brules_Choir-The_Right_Way.mp3
+2017-07-17 04:36:34,032 discogstagger.main INFO     Writing file Pepe_Bradock_and_The_Grand_Brules_Choir-Burning-(KIF_S_A_08)-1999-jW/03-Pepe_Bradock_and_The_Grand_Brules_Choir-Deep_Burnt.mp3
+2017-07-17 04:36:34,054 discogstagger.main INFO     Generating .nfo file
+2017-07-17 04:36:34,056 discogstagger.main INFO     Generating .m3u file
+2017-07-17 04:36:34,056 discogstagger.main INFO     Tagging complete.
 ```
