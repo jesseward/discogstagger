@@ -215,15 +215,21 @@ def default_config():
 
 
 def init_logging(conf):
-    fileConfig(conf)
+    try:
+        fileConfig(conf)
+    except Exception as e:
+        click.echo('FATAL. Unable to load logging configuration from config. error={0}'.format(e))
+        sys.exit(1)
     return logging.getLogger(__name__)
 
 
 @click.command()
-@click.option('-c', '--conf', default=default_config(), help='The discogstagger configuration file.')
+@click.option('-c', '--conf', default=default_config(), help='The discogstagger configuration file.',
+              type=click.Path(exists=True))
 @click.option('-d', '--destination', help='The (base) directory to copy the tagged files to')
 @click.option('-r', '--releaseid', help='The discogs.com release id of the target album')
-@click.option('-s', '--source', help='The directory that you wish to tag', type=click.Path(exists=True))
+@click.option('-s', '--source', help='The directory that you wish to tag',
+              type=click.Path(exists=True), required=True)
 def tagger(conf, destination, releaseid, source):
 
     _log = init_logging(conf)
