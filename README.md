@@ -1,4 +1,5 @@
 # discogstagger
+[![Build Status](https://api.travis-ci.org/jesseward/discogstagger.svg?branch=master)](https://api.travis-ci.org/jesseward/discogstagger)
 
 ## What is it
 
