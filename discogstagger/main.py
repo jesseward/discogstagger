@@ -233,13 +233,14 @@ def init_logging(conf):
 def tagger(conf, destination, releaseid, source):
 
     _log = init_logging(conf)
+
     if not destination:
         destination = source
 
     cfg = TaggerConfig(source, destination, conf)
 
     if cfg.id_tag in cfg.release_tags:
-        release_id = cfg.release_tags[cfg.id_tag].strip()
+        releaseid = cfg.release_tags[cfg.id_tag].strip()
 
     if releaseid:
         release_id = releaseid
