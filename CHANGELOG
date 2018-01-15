@@ -1,5 +1,10 @@
 ## Changelog
 
+Version 3.0.3
+
+* Off by one bug, that would impact releases with a single track
+(https://github.com/jesseward/discogstagger/commit/94bfd151edc7a5796e1ff1d1afb217836f9c8e7c)
+
 Version 3.0.2
 
 * Bumping version.
