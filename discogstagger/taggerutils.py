@@ -43,7 +43,7 @@ class TaggerUtils(object):
             self._log.debug('Ummatched album.tracks. album.tracks={0}'.format(self.album.tracks))
             self.tag_map = None
 
-    def _value_from_tag_format(self, fmt, trackno=1, position=1, filetype=".mp3"):
+    def _value_from_tag_format(self, fmt, trackno=1, position=0, filetype=".mp3"):
         """ Fill in the used variables using the track information """
 
         self._log.debug('parameters given: fmt: %s' % fmt)
@@ -75,7 +75,7 @@ class TaggerUtils(object):
 
         return fmt
 
-    def _value_from_tag(self, fmt, trackno=1, position=1, filetype='.mp3'):
+    def _value_from_tag(self, fmt, trackno=1, position=0, filetype='.mp3'):
         """ Generates the filename tagging map """
 
         fmt = self._value_from_tag_format(fmt, trackno, position, filetype)
@@ -123,7 +123,7 @@ class TaggerUtils(object):
             if e.errno == errno.EEXIST:
                 raise IOError('No such directory "%s"', self.sourcedir)
             else:
-                raise IOError('General IO system error "%s"' % errno[e])
+                raise IOError('General IO system error "%s"' % e.errno)
 
         return {'target_list': target_list, 'copy_files': copy_files}
 
