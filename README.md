@@ -1,3 +1,6 @@
+# STATUS
+Note that this utility is no longer maintained.
+
 # discogstagger
 [![Build Status](https://api.travis-ci.org/jesseward/discogstagger.svg?branch=master)](https://api.travis-ci.org/jesseward/discogstagger)
 
